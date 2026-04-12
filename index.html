@@ -1272,6 +1272,7 @@ function showScreen(name) {
   if (name === 'settings') renderSettings();
   if (name === 'supplements') renderSupplements();
   if (name === 'training') renderTrainingScreen();
+  if (name === 'dashboard' && typeof renderWhoopDashCard === 'function') renderWhoopDashCard();
   updateAll();
 }
 
@@ -1372,6 +1373,9 @@ function updateAll() {
 
   // Weight
   renderWeight();
+
+  // WHOOP dashboard card
+  if (typeof renderWhoopDashCard === 'function') renderWhoopDashCard();
 }
 
 // ══════════════════════════════════════════════
@@ -2822,17 +2826,32 @@ async function syncWhoop() {
       whoopFetch('/cycle?limit=1').catch(()=>null),
       whoopFetch('/sleep?limit=1').catch(()=>null),
     ]);
+    console.log('WHOOP recovery raw:', JSON.stringify(recovery));
+    console.log('WHOOP cycles raw:', JSON.stringify(cycles));
+    console.log('WHOOP sleep raw:', JSON.stringify(sleepData));
     const d = { synced: new Date().toISOString(), recovery:null, hrv:null, strain:null, sleepHours:null, restingHR:null };
     if (recovery?.records?.[0]) {
-      const r = recovery.records[0].score||{};
-      d.recovery  = Math.round(r.recovery_score||0);
-      d.hrv       = Math.round(r.hrv_rmssd_milli||0);
-      d.restingHR = Math.round(r.resting_heart_rate||0);
+      const r = recovery.records[0];
+      const score = r.score || {};
+      d.recovery  = Math.round(score.recovery_score ?? score.user_calibrating ? 0 : 0);
+      d.hrv       = Math.round(score.hrv_rmssd_milli || score.hrv || 0);
+      d.restingHR = Math.round(score.resting_heart_rate || score.rhr || 0);
+      // WHOOP sometimes nests differently
+      if (!d.recovery && r.recovery_score) d.recovery = Math.round(r.recovery_score);
     }
-    if (cycles?.records?.[0]) d.strain = parseFloat((cycles.records[0].score?.strain||0).toFixed(1));
+    if (cycles?.records?.[0]) {
+      const c = cycles.records[0];
+      const strain = c.score?.strain ?? c.strain ?? null;
+      d.strain = strain !== null ? parseFloat(strain.toFixed(1)) : null;
+    }
     if (sleepData?.records?.[0]) {
-      const ms = sleepData.records[0].score?.stage_summary?.total_in_bed_time_milli||0;
-      d.sleepHours = Math.round((ms/3600000)*10)/10;
+      const s = sleepData.records[0];
+      const summary = s.score?.stage_summary || s.stage_summary || {};
+      const ms = summary.total_in_bed_time_milli
+              || summary.total_sleep_time_milli
+              || s.score?.total_sleep_time_milli
+              || 0;
+      d.sleepHours = ms ? Math.round((ms/3600000)*10)/10 : null;
     }
     setStore('jw_whoop_data', d);
     setStore('jw_whoop_last_sync', new Date().toISOString());
