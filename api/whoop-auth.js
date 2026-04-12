@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(401).json({ error: 'Missing authorization' });
     try {
-      const response = await fetch(`https://api.prod.whoop.com/developer/v1${path}`, {
+      const response = await fetch(`https://api.prod.whoop.com/developer/v2${path}`, {
         headers: { 'Authorization': authHeader }
       });
       const data = await response.json();
