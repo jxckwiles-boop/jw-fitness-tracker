@@ -1004,20 +1004,7 @@
 
       <!-- Coach notes -->
       <div class="section-header"><span class="section-title">Coach's notes</span></div>
-      <div style="display:grid;gap:8px;margin-bottom:16px">
-        ${[
-          ['HRV is declining — address it now', 'Before chasing PRs, spend the first 2 weeks focused on bringing recovery baseline back up. More sleep, more food, slightly less conditioning intensity. Build from a recovered state.'],
-          ['Shift the spin:lift ratio', 'You\'ve been doing ~29 spins vs 26 lifts. For your goals it should be 3:1 in favour of lifting. Cardio supports recovery and football fitness — it doesn\'t dominate the stimulus.'],
-          ['100kg bench is a process', 'Likely at 75–80kg 1RM now. With consistent green-recovery sessions and weekly progression, that\'s 100kg in 16–20 weeks. Track every working set.'],
-          ['The shoulder is your priority', 'A re-dislocation sidelines everything. 5 minutes of rehab twice a week is a tiny insurance premium against months of lost training. Do it even when it feels fine.'],
-          ['Eat before you feel hungry', 'As a hard gainer, your instincts undersell your calorie needs. Eat on a schedule. Missing one meal can put you in a deficit — this is why you\'re not gaining.'],
-          ['Review every 4 weeks', 'Weight trending up 0.3–0.5kg? Bench progressing? HRV stable? If weight stalls 2+ weeks, add 200kcal/day. If HRV keeps declining, cut one session per week.']
-        ].map(([title, body]) => `
-          <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:4px">${title}</div>
-            <div style="font-size:12px;color:var(--text2);font-family:var(--font-mono);line-height:1.6">${body}</div>
-          </div>`).join('')}
-      </div>
+      <div style="display:grid;gap:8px;margin-bottom:16px" id="plan-coach-notes"></div>
 
     </div>
   </div>
@@ -3298,6 +3285,24 @@ function renderOverview() {
   if (!el || el.dataset.rendered) return;
   el.dataset.rendered = '1';
 
+  // Coach's notes
+  const notes = [
+    ['HRV is declining — address it now', 'Before chasing PRs, spend the first 2 weeks focused on bringing your recovery baseline back up. More sleep, more food, slightly less conditioning intensity. Build from a recovered state, not a depleted one.'],
+    ['Shift the spin:lift ratio', 'You\'ve been doing ~29 spins vs 26 lifts — nearly even. For your goals it should be 3:1 in favour of lifting. Cardio supports recovery and football fitness, it doesn\'t dominate the training stimulus.'],
+    ['100kg bench is a process', 'Likely at 75–80kg 1RM now. With consistent green-recovery sessions and weekly progression, that\'s 100kg in 16–20 weeks. Track every working set in Hevy. If you miss a session, don\'t make it up — continue from where you left off.'],
+    ['The shoulder is your priority', 'A re-dislocation sidelines everything. 5 minutes of rehab twice a week is a tiny insurance premium against months of lost training. Do it even when it feels fine — especially when it feels fine.'],
+    ['Eat before you feel hungry', 'As a hard gainer with a lean frame, your instincts will undersell your calorie needs. Eat on a schedule, not on hunger signals. Missing even one meal can put you in a deficit day — this is why you\'re not gaining.'],
+    ['Review every 4 weeks', 'Check: weight trending up 0.3–0.5kg? Bench progressing? HRV stable or improving? If weight stalls 2+ weeks, add 200kcal/day. If HRV keeps declining, reduce one session per week. These are your key adjustment levers.'],
+  ];
+  const notesEl = document.getElementById('plan-coach-notes');
+  if (notesEl) {
+    notesEl.innerHTML = notes.map(([title, body]) => `
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${title}</div>
+        <div style="font-size:12px;color:var(--text2);font-family:var(--font-mono);line-height:1.6">${body}</div>
+      </div>`).join('');
+  }
+
   el.innerHTML = PLAN_DAYS.map((d, i) => `
     <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px">
       <div onclick="togglePlanDay(${i})" style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer">
@@ -3359,6 +3364,21 @@ updateIntegrationStatus();
 renderOverview();
 // Handle WHOOP OAuth callback if returning from auth
 handleWhoopCallback();
+// Auto-sync in background if keys are present and data is stale (>1 hour old)
+setTimeout(() => {
+  const hevyKey = getHevyKey();
+  const hevyLast = getStore('jw_hevy_last_sync', '');
+  const hevyStale = !hevyLast || (Date.now() - new Date(hevyLast).getTime()) > 3600000;
+  if (hevyKey && hevyStale) {
+    syncHevy().catch(() => {});
+  }
+  const whoopTokens = getWhoopTokens();
+  const whoopLast = getStore('jw_whoop_last_sync', '');
+  const whoopStale = !whoopLast || (Date.now() - new Date(whoopLast).getTime()) > 3600000;
+  if (whoopTokens && whoopStale) {
+    syncWhoop().catch(() => {});
+  }
+}, 2000);
 </script>
 </body>
 </html>
