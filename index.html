@@ -2808,8 +2808,11 @@ async function getWhoopAccessToken() {
 async function whoopFetch(path) {
   const token = await getWhoopAccessToken();
   if (!token) throw new Error('Not authenticated');
-  const res = await fetch(WHOOP_API_BASE + path, { headers:{'Authorization':'Bearer '+token} });
-  if (!res.ok) throw new Error('WHOOP API error '+res.status);
+  // Route through our Vercel proxy to avoid CORS
+  const res = await fetch('/api/whoop-auth?path=' + encodeURIComponent(path), {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (!res.ok) throw new Error('WHOOP API error ' + res.status);
   return res.json();
 }
 
