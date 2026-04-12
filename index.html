@@ -417,6 +417,21 @@
         </div>
       </div>
 
+      <!-- Morning routine accountability -->
+      <div class="card" style="margin-top:10px;cursor:pointer" onclick="showScreen('supplements')">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="morning-dash-dot" style="width:12px;height:12px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background 0.3s"></div>
+            <div>
+              <div style="font-size:13px;font-weight:700">Morning routine</div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:1px" id="morning-dash-label">Not done yet</div>
+            </div>
+          </div>
+          <div id="morning-dash-pct" style="font-size:20px;font-weight:800;color:var(--text3)">—</div>
+        </div>
+        <div class="progress-bar" style="height:4px;margin-top:10px"><div class="progress-fill" id="morning-dash-prog" style="background:var(--accent);width:0%;transition:width 0.4s ease"></div></div>
+      </div>
+
       <!-- Streak -->
       <div class="card" style="margin-top:10px">
         <div style="font-size:13px;font-weight:700;margin-bottom:10px">This week</div>
@@ -781,16 +796,11 @@
           </div>
         </div>
       </div>
-
-      <!-- WHOOP + Hevy API coming -->
-      <div style="background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:3px">Phase 3 — live integrations</div>
-        <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">Hevy API will auto-pull your sessions. WHOOP API will feed recovery score into nutrition targets in real time.</div>
-      </div>
     </div>
 
     <!-- TAB: HISTORY -->
     <div id="training-tab-history" class="scroll-area" style="display:none">
+      <button onclick="showTrainingTab('today')" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text2);font-family:var(--font-mono);font-size:12px;cursor:pointer;padding:0 0 14px;margin-top:-4px">← Back</button>
       <div id="training-history-list">
         <div class="empty-state"><div class="empty-icon">📋</div>No sessions logged yet</div>
       </div>
@@ -798,11 +808,9 @@
 
     <!-- TAB: PRs -->
     <div id="training-tab-prs" class="scroll-area" style="display:none">
-      <div style="margin-bottom:12px;font-size:13px;color:var(--text2);font-family:var(--font-mono);line-height:1.6">
-        Log sessions here or import from Hevy in Phase 3 to track PRs automatically.
-      </div>
+      <button onclick="showTrainingTab('today')" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text2);font-family:var(--font-mono);font-size:12px;cursor:pointer;padding:0 0 14px;margin-top:-4px">← Back</button>
       <div id="pr-list">
-        <div class="empty-state"><div class="empty-icon">🏆</div>No PRs yet</div>
+        <div class="empty-state"><div class="empty-icon">🏆</div>No PRs yet — sync Hevy to populate</div>
       </div>
     </div>
   </div>
@@ -938,6 +946,82 @@
   </div>
 
 
+  <!-- ═══════════════════════════════════════ -->
+  <!--  SCREEN: OVERVIEW (Training Plan Bible) -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="screen" id="screen-overview">
+    <div class="page-header">
+      <div class="page-title">The Plan</div>
+      <div class="page-subtitle">Hybrid Performance Programme v2</div>
+    </div>
+    <div class="scroll-area">
+
+      <!-- Goals -->
+      <div class="section-header"><span class="section-title">Goal targets</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div class="card" style="border-top:2px solid var(--red)">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px">BENCH PRESS</div>
+          <div style="font-size:22px;font-weight:800;color:var(--accent)">100kg</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">Est. now ~75–80kg · 16–20wk</div>
+        </div>
+        <div class="card" style="border-top:2px solid var(--blue)">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px">5K RUN</div>
+          <div style="font-size:22px;font-weight:800;color:var(--blue)">&lt;20min</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">4:00/km pace · 12–16wk</div>
+        </div>
+        <div class="card" style="border-top:2px solid var(--accent)">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px">BODYWEIGHT</div>
+          <div style="font-size:22px;font-weight:800;color:var(--accent)">87–88kg</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">~0.5kg/month lean gain</div>
+        </div>
+        <div class="card" style="border-top:2px solid var(--amber)">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px">MATCH FITNESS</div>
+          <div style="font-size:22px;font-weight:800;color:var(--amber)">90 min</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">Football · build 24–32wk</div>
+        </div>
+      </div>
+
+      <!-- Weekly structure -->
+      <div class="section-header"><span class="section-title">Weekly structure</span></div>
+      <div id="plan-days"></div>
+
+      <!-- WHOOP protocol -->
+      <div class="section-header" style="margin-top:8px"><span class="section-title">WHOOP recovery gates</span></div>
+      <div style="display:grid;gap:6px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:100px 1fr;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+          <div style="background:var(--accent-dim);padding:12px 14px;font-size:12px;font-weight:700;color:var(--accent);font-family:var(--font-mono);display:flex;align-items:center">GREEN<br><span style="font-size:10px;font-weight:400;opacity:0.8">67–100%</span></div>
+          <div style="padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.5">Train as planned. Full volume, full intensity. Push progressive overload. Hit the session.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:100px 1fr;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+          <div style="background:var(--amber-dim);padding:12px 14px;font-size:12px;font-weight:700;color:var(--amber);font-family:var(--font-mono);display:flex;align-items:center">YELLOW<br><span style="font-size:10px;font-weight:400;opacity:0.8">34–66%</span></div>
+          <div style="padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.5">Reduce volume 20%. Drop RDL to 3×6 at 80%. Skip Friday HIIT — replace with Zone 2. Train, don't destroy.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:100px 1fr;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
+          <div style="background:var(--red-dim);padding:12px 14px;font-size:12px;font-weight:700;color:var(--red);font-family:var(--font-mono);display:flex;align-items:center">RED<br><span style="font-size:10px;font-weight:400;opacity:0.8">0–33%</span></div>
+          <div style="padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.5">Rest or light mobility only. No heavy lifting. Your body is telling you something — listen. Eat, sleep, recover.</div>
+        </div>
+      </div>
+
+      <!-- Coach notes -->
+      <div class="section-header"><span class="section-title">Coach's notes</span></div>
+      <div style="display:grid;gap:8px;margin-bottom:16px">
+        ${[
+          ['HRV is declining — address it now', 'Before chasing PRs, spend the first 2 weeks focused on bringing recovery baseline back up. More sleep, more food, slightly less conditioning intensity. Build from a recovered state.'],
+          ['Shift the spin:lift ratio', 'You\'ve been doing ~29 spins vs 26 lifts. For your goals it should be 3:1 in favour of lifting. Cardio supports recovery and football fitness — it doesn\'t dominate the stimulus.'],
+          ['100kg bench is a process', 'Likely at 75–80kg 1RM now. With consistent green-recovery sessions and weekly progression, that\'s 100kg in 16–20 weeks. Track every working set.'],
+          ['The shoulder is your priority', 'A re-dislocation sidelines everything. 5 minutes of rehab twice a week is a tiny insurance premium against months of lost training. Do it even when it feels fine.'],
+          ['Eat before you feel hungry', 'As a hard gainer, your instincts undersell your calorie needs. Eat on a schedule. Missing one meal can put you in a deficit — this is why you\'re not gaining.'],
+          ['Review every 4 weeks', 'Weight trending up 0.3–0.5kg? Bench progressing? HRV stable? If weight stalls 2+ weeks, add 200kcal/day. If HRV keeps declining, cut one session per week.']
+        ].map(([title, body]) => `
+          <div class="card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px">${title}</div>
+            <div style="font-size:12px;color:var(--text2);font-family:var(--font-mono);line-height:1.6">${body}</div>
+          </div>`).join('')}
+      </div>
+
+    </div>
+  </div>
+
   <nav>
     <div class="nav-item active" onclick="showScreen('dashboard')" id="nav-dashboard">
       <div class="nav-icon">◈</div>
@@ -955,6 +1039,10 @@
       <div class="nav-icon">◎</div>
       <div>Routines</div>
     </div>
+    <div class="nav-item" onclick="showScreen('overview')" id="nav-overview">
+      <div class="nav-icon">◇</div>
+      <div>Plan</div>
+    </div>
     <div class="nav-item" onclick="showScreen('settings')" id="nav-settings">
       <div class="nav-icon">◌</div>
       <div>Settings</div>
@@ -968,22 +1056,23 @@
   <div class="modal-overlay" id="modal-food" onclick="closeModal('modal-food',event)">
     <div class="modal">
       <div class="modal-handle"></div>
-      <div class="modal-title">Log food</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="modal-title" style="margin:0">Log food</div>
+        <button onclick="closeModal('modal-food')" style="background:var(--surface2);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text2)">×</button>
+      </div>
 
       <div class="tab-row">
         <div class="tab active" onclick="setFoodInputTab('search',this)">Search</div>
         <div class="tab" onclick="setFoodInputTab('manual',this)">Manual</div>
-        <div class="tab" onclick="setFoodInputTab('photo',this)">📷 Photo</div>
-        <div class="tab" onclick="setFoodInputTab('restaurant',this)">Restaurant</div>
+        <div class="tab" onclick="setFoodInputTab('photo',this)">📷 Label</div>
+        <div class="tab" onclick="setFoodInputTab('restaurant',this)">✦ Estimate</div>
       </div>
 
-      <!-- Photo tab -->
+      <!-- Photo / label scan tab -->
       <div id="food-tab-photo" style="display:none">
         <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px;color:var(--accent);font-family:var(--font-mono);line-height:1.5">
           Take a photo of any nutrition label — Claude reads it and calculates your macros automatically
         </div>
-
-        <!-- Image upload area -->
         <div id="photo-drop-zone" onclick="document.getElementById('photo-file-input').click()"
           style="border:1.5px dashed var(--border2);border-radius:var(--radius-sm);padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:14px;transition:border-color 0.2s">
           <div style="font-size:32px;margin-bottom:8px">📷</div>
@@ -991,14 +1080,10 @@
           <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Nutrition label · ingredients panel · any food label</div>
         </div>
         <input type="file" id="photo-file-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(this)">
-
-        <!-- Preview -->
         <div id="photo-preview-wrap" style="display:none;margin-bottom:14px;position:relative">
           <img id="photo-preview" style="width:100%;border-radius:var(--radius-sm);max-height:200px;object-fit:cover">
           <div onclick="clearPhoto()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#fff">×</div>
         </div>
-
-        <!-- Serving size + meal (shown after photo selected) -->
         <div id="photo-serving-row" style="display:none">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
             <div class="input-group" style="margin:0">
@@ -1017,8 +1102,6 @@
           </div>
           <button class="btn btn-primary" onclick="analysePhotoLabel()">Read label &amp; calculate</button>
         </div>
-
-        <!-- Result -->
         <div id="photo-result" style="margin-top:14px"></div>
       </div>
 
@@ -1071,14 +1154,29 @@
         <button class="btn btn-primary" style="margin-top:4px" onclick="logManualFood()">Add to log</button>
       </div>
 
-      <!-- Restaurant tab -->
+      <!-- Estimate tab (formerly restaurant) -->
       <div id="food-tab-restaurant" style="display:none">
-        <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px;color:var(--accent);font-family:var(--font-mono)">
-          Describe your meal and we'll estimate the macros using AI
+        <div style="font-size:13px;color:var(--text2);font-family:var(--font-mono);line-height:1.6;margin-bottom:14px">
+          Describe anything — restaurant meal, friend's cooking, café coffee, leftovers. Add a photo for better portion accuracy.
         </div>
+
+        <!-- Optional photo -->
+        <div style="margin-bottom:14px">
+          <div id="est-photo-zone" onclick="document.getElementById('est-photo-input').click()"
+            style="border:1.5px dashed var(--border2);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;transition:border-color 0.2s;display:flex;align-items:center;gap:10px;justify-content:center">
+            <span style="font-size:20px">📷</span>
+            <span style="font-size:13px;color:var(--text3);font-family:var(--font-mono)">Add photo (optional — helps with portion size)</span>
+          </div>
+          <input type="file" id="est-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleEstimatePhoto(this)">
+          <div id="est-photo-preview-wrap" style="display:none;margin-top:8px;position:relative">
+            <img id="est-photo-preview" style="width:100%;border-radius:var(--radius-sm);max-height:160px;object-fit:cover">
+            <div onclick="clearEstimatePhoto()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:#fff">×</div>
+          </div>
+        </div>
+
         <div class="input-group">
-          <label class="input-label">Describe your meal</label>
-          <input type="text" id="restaurant-desc" placeholder="e.g. Wagamama chicken ramen, large">
+          <label class="input-label">Describe what you had</label>
+          <input type="text" id="restaurant-desc" placeholder="e.g. Wagamama ramen · friend's pasta bake · oat flat white + croissant">
         </div>
         <div class="input-group">
           <label class="input-label">Meal</label>
@@ -1269,9 +1367,10 @@ function showScreen(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'settings') renderSettings();
+  if (name === 'settings')    renderSettings();
   if (name === 'supplements') renderSupplements();
-  if (name === 'training') renderTrainingScreen();
+  if (name === 'training')    renderTrainingScreen();
+  if (name === 'overview')    renderOverview();
   if (name === 'dashboard' && typeof renderWhoopDashCard === 'function') renderWhoopDashCard();
   updateAll();
 }
@@ -1376,6 +1475,22 @@ function updateAll() {
 
   // WHOOP dashboard card
   if (typeof renderWhoopDashCard === 'function') renderWhoopDashCard();
+
+  // Morning routine dashboard indicator
+  const morningLog = getMorningLog(today);
+  const morningDone = MORNING_ROUTINE.filter(m => morningLog[m.id]).length;
+  const morningTotal = MORNING_ROUTINE.length;
+  const morningPct = Math.round(morningDone / morningTotal * 100);
+  const morningComplete = morningDone === morningTotal;
+  const mDot   = document.getElementById('morning-dash-dot');
+  const mLabel = document.getElementById('morning-dash-label');
+  const mPct   = document.getElementById('morning-dash-pct');
+  const mProg  = document.getElementById('morning-dash-prog');
+  if (mDot)   mDot.style.background = morningComplete ? 'var(--accent)' : morningDone > 0 ? 'var(--amber)' : 'var(--red)';
+  if (mLabel) mLabel.textContent = morningComplete ? 'Done — great start' : morningDone > 0 ? `${morningDone}/${morningTotal} done` : 'Not done yet — tap to log';
+  if (mLabel) mLabel.style.color = morningComplete ? 'var(--accent)' : morningDone > 0 ? 'var(--amber)' : 'var(--text3)';
+  if (mPct)   { mPct.textContent = morningComplete ? '✓' : morningPct + '%'; mPct.style.color = morningComplete ? 'var(--accent)' : morningDone > 0 ? 'var(--amber)' : 'var(--text3)'; }
+  if (mProg)  mProg.style.width = morningPct + '%';
 }
 
 // ══════════════════════════════════════════════
@@ -1695,11 +1810,36 @@ function logPhotoFood(json, serving, meal) {
 // ══════════════════════════════════════════════
 //  RESTAURANT MODE (AI estimate)
 // ══════════════════════════════════════════════
+// Estimate tab photo handling
+let estimatePhotoBase64 = null;
+
+function handleEstimatePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    estimatePhotoBase64 = e.target.result.split(',')[1];
+    document.getElementById('est-photo-preview').src = e.target.result;
+    document.getElementById('est-photo-preview-wrap').style.display = '';
+    document.getElementById('est-photo-zone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearEstimatePhoto() {
+  estimatePhotoBase64 = null;
+  document.getElementById('est-photo-input').value = '';
+  document.getElementById('est-photo-preview-wrap').style.display = 'none';
+  document.getElementById('est-photo-zone').style.display = '';
+}
+
 async function estimateRestaurantMacros() {
-  const desc = document.getElementById('restaurant-desc').value.trim();
-  if (!desc) { showToast('Describe your meal first'); return; }
-  const resEl = document.getElementById('restaurant-result');
-  resEl.innerHTML = '<div style="font-family:var(--font-mono);font-size:13px;color:var(--text3)">Estimating…</div>';
+  const desc   = document.getElementById('restaurant-desc').value.trim();
+  const hasPhoto = !!estimatePhotoBase64;
+  if (!desc && !hasPhoto) { showToast('Describe what you had first'); return; }
+
+  const resEl  = document.getElementById('restaurant-result');
+  resEl.innerHTML = `<div style="font-family:var(--font-mono);font-size:13px;color:var(--text3);display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite"></span>Estimating…</div>`;
 
   const apiKey = getStore('jw_api_key', '');
   if (!apiKey) {
@@ -1708,34 +1848,54 @@ async function estimateRestaurantMacros() {
   }
 
   try {
+    // Build message content — text only or text + photo
+    const prompt = `Estimate the macros for this meal. It could be a restaurant dish, home-cooked food, a café item, or anything else.
+${desc ? `Description: "${desc}"` : ''}
+${hasPhoto ? 'A photo of the meal/plate is attached — use it to assess portion sizes and visible ingredients.' : ''}
+
+Reply with ONLY valid JSON, no other text:
+{"name":"short descriptive name","cal":0,"p":0,"c":0,"f":0,"fibre":0,"confidence":"high|medium|low","notes":"brief note on what drove the estimate or key uncertainties"}
+
+Be realistic about portions. If confidence is low, say so in notes.`;
+
+    const content = hasPhoto
+      ? [
+          { type:'image', source:{ type:'base64', media_type:'image/jpeg', data: estimatePhotoBase64 } },
+          { type:'text', text: prompt }
+        ]
+      : [{ type:'text', text: prompt }];
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: `Estimate macros for this meal: "${desc}". Reply with ONLY valid JSON: {"name":"...","cal":0,"p":0,"c":0,"f":0,"fibre":0}. Use realistic restaurant portions.`
-        }]
-      })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role:'user', content }] })
     });
+
     const data = await res.json();
-    const text = data.content[0].text.trim();
-    const json = JSON.parse(text.replace(/```json|```/g,'').trim());
+    const text = data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const json = JSON.parse(text);
+
+    const confColor = json.confidence === 'high' ? 'var(--accent)' : json.confidence === 'medium' ? 'var(--amber)' : 'var(--red)';
+    const confLabel = json.confidence === 'high' ? 'confident estimate' : json.confidence === 'medium' ? 'rough estimate' : 'uncertain estimate';
+
     resEl.innerHTML = `
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;font-family:var(--font-mono);font-size:12px;margin-bottom:12px">
-        <div style="font-weight:700;margin-bottom:6px;color:var(--text)">${json.name}</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center">
-          <div><div style="color:var(--text3)">KCAL</div><div style="font-weight:700">${json.cal}</div></div>
-          <div><div style="color:var(--accent)">PROT</div><div style="font-weight:700;color:var(--accent)">${json.p}g</div></div>
-          <div><div style="color:var(--blue)">CARB</div><div style="font-weight:700;color:var(--blue)">${json.c}g</div></div>
-          <div><div style="color:var(--amber)">FAT</div><div style="font-weight:700;color:var(--amber)">${json.f}g</div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;font-family:var(--font-mono);font-size:12px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">${json.name}</div>
+          <div style="font-size:10px;color:${confColor};padding:2px 8px;border:1px solid ${confColor};border-radius:10px">${confLabel}</div>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center;margin-bottom:8px">
+          <div><div style="color:var(--text3)">KCAL</div><div style="font-weight:700;font-size:15px">${Math.round(json.cal)}</div></div>
+          <div><div style="color:var(--accent)">PROT</div><div style="font-weight:700;font-size:15px;color:var(--accent)">${Math.round(json.p)}g</div></div>
+          <div><div style="color:var(--blue)">CARB</div><div style="font-weight:700;font-size:15px;color:var(--blue)">${Math.round(json.c)}g</div></div>
+          <div><div style="color:var(--amber)">FAT</div><div style="font-weight:700;font-size:15px;color:var(--amber)">${Math.round(json.f)}g</div></div>
+        </div>
+        ${json.notes ? `<div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;line-height:1.5">${json.notes}</div>` : ''}
       </div>
       <button class="btn btn-primary" onclick="logRestaurantFood(${JSON.stringify(json).replace(/"/g,'&quot;')})">Add to log</button>`;
+
   } catch(e) {
-    resEl.innerHTML = `<div style="font-family:var(--font-mono);font-size:13px;color:var(--red)">Couldn't estimate. Check API key in Settings.</div>`;
+    resEl.innerHTML = `<div style="font-family:var(--font-mono);font-size:13px;color:var(--red)">Couldn't estimate. Check your API key in Settings.</div>`;
   }
 }
 
@@ -1745,6 +1905,7 @@ function logRestaurantFood(json) {
   closeModal('modal-food');
   document.getElementById('restaurant-desc').value = '';
   document.getElementById('restaurant-result').innerHTML = '';
+  clearEstimatePhoto();
 }
 
 // ══════════════════════════════════════════════
@@ -3049,6 +3210,137 @@ function updateIntegrationStatus() {
   renderWhoopDashCard();
 }
 
+// ══════════════════════════════════════════════
+//  OVERVIEW — TRAINING PLAN BIBLE
+// ══════════════════════════════════════════════
+const PLAN_DAYS = [
+  {
+    day: 'Monday', type: 'STR-A', typeColor: 'var(--red)', label: 'Lower & Push',
+    focus: 'Quad-dominant + chest + shoulders',
+    exercises: [
+      { name: 'Leg Press (Machine)', sets: '4 × 8–10', rest: '2.5 min', note: 'Full ROM. Heels shoulder-width. Don\'t lock knees at top.' },
+      { name: 'Calf Press (Machine)', sets: '4 × 12–15', rest: '90s', note: 'Full stretch at bottom. Pause at top.' },
+      { name: 'Reverse Lunge (Dumbbell)', sets: '3 × 10 ea.', rest: '90s', note: 'Step back, not forward. Keep torso upright.', injury: 'ANKLE' },
+      { name: 'Bench Press (Dumbbell)', sets: '4 × 8', rest: '2.5 min', note: 'Elbows 60–75°. Full ROM. Retract scapulae throughout.', injury: 'SHOULDER' },
+      { name: 'Incline Bench Press (Dumbbell)', sets: '3 × 10', rest: '2 min', note: '30–45° incline. Upper chest emphasis.', injury: 'SHOULDER' },
+      { name: 'Lateral Raise (Dumbbell)', sets: '3 × 12–15', rest: '60s', note: 'Slight forward lean. Lead with elbows.' },
+    ],
+    note: 'Progressive overload target: add 2.5kg to bench every 1–2 weeks. Track every working set in Hevy.'
+  },
+  {
+    day: 'Tuesday', type: 'ZONE 2', typeColor: 'var(--blue)', label: 'Zone 2 Cardio',
+    focus: 'Aerobic base + active recovery',
+    exercises: [
+      { name: 'Spin / Run / Row', sets: '40–60 min', rest: '—', note: 'Conversational pace. Heart rate 130–150bpm. This builds the engine for Friday.' },
+      { name: 'Shoulder Rehab', sets: '1 round', rest: '—', note: 'Band pull-aparts ×20, face pulls ×15, external rotation ×15 ea., Y-T-W ×12 ea.', injury: 'SHOULDER' },
+    ],
+    note: 'Zone 2 is non-negotiable for match fitness. Don\'t skip it because it feels too easy — that\'s the point.'
+  },
+  {
+    day: 'Wednesday', type: 'STR-B', typeColor: 'var(--red)', label: 'Hinge + Pull + Press',
+    focus: 'Posterior chain + back width',
+    exercises: [
+      { name: 'Romanian Deadlift', sets: '4 × 6–8', rest: '2.5 min', note: 'Hamstring stretch is the goal. Hip hinge, soft knees, bar stays close.' },
+      { name: 'Weighted Pull-Up', sets: '4 × 6–8', rest: '2.5 min', note: 'Full dead hang start. Pull elbows down and back. 3s negative.', injury: 'SHOULDER' },
+      { name: 'Arnold Press', sets: '3 × 8–10', rest: '2 min', note: 'Start light. Rotation is therapeutic — no momentum.', injury: 'SHOULDER' },
+      { name: 'Seated Cable Row', sets: '3 × 10–12', rest: '90s', note: 'Drive elbows back hard. 2s hold at full contraction.' },
+      { name: 'Lateral Raise (Cables)', sets: '3 × 12–15', rest: '90s', note: 'Cable keeps tension at top — better than DBs for width.' },
+      { name: 'Side + Copenhagen Plank', sets: '3 × 40s ea.', rest: '60s', note: 'Copenhagen builds adductor strength — critical for football.' },
+    ],
+    note: 'Recovery gate: yellow = drop RDL to 3×6 at 80%. Red = skip RDL, upper body only.'
+  },
+  {
+    day: 'Thursday', type: 'RECOV', typeColor: 'var(--accent)', label: 'Recovery + Rehab',
+    focus: 'Protect Friday performance',
+    exercises: [
+      { name: '20–30 min Walk or easy Spin', sets: '20–30 min', rest: '—', note: 'Movement without strain. LISS only.' },
+      { name: 'Shoulder Rehab Round 2', sets: '2–3 rounds', rest: '—', note: 'Band pull-aparts, face pulls, external rotation, Y-T-W.', injury: 'SHOULDER' },
+      { name: 'Ankle Strength Circuit', sets: '3 rounds', rest: '—', note: 'Single-leg calf raises ×20, banded eversion ×15, heel walks ×20m, balance 45s.', injury: 'ANKLE' },
+      { name: 'Full Mobility Protocol', sets: '15 min', rest: '—', note: 'Hip, thoracic, hamstring, ankle — see Routines tab.' },
+    ],
+    note: 'Thursday exists to protect Friday. Do not turn this into an extra gym session. The discipline to recover is harder than the discipline to train.'
+  },
+  {
+    day: 'Friday', type: 'COND', typeColor: 'var(--amber)', label: 'High Intensity Conditioning',
+    focus: 'Match fitness + VO₂max',
+    exercises: [
+      { name: 'WHOOP GATE: Green only', sets: '—', rest: '—', note: 'Yellow or red: replace with 30 min Zone 2 + mobility. Do not override this rule.' },
+      { name: 'Option A: Football', sets: '60–90 min', rest: 'Game pace', note: 'Full game = full conditioning session. Gold standard.' },
+      { name: 'Option B: Interval Run', sets: '6–10 intervals', rest: '2 min', note: '6×800m at 3:45/km, or 10×400m at 3:30/km.' },
+      { name: 'Option C: HIIT Circuit', sets: '8 × 30s/30s', rest: 'Full', note: 'Bike / row / KB swings. Avoid jump work until ankle stronger.', injury: 'ANKLE' },
+    ],
+    note: 'Current goal: sustain high intensity for 45 min. Month 3: 60 min. Month 6: full 90. Zone 2 sessions build the base — this is the peak.'
+  },
+  {
+    day: 'Saturday', type: 'STR-C', typeColor: 'var(--red)', label: 'Hypertrophy Support',
+    focus: 'Accessory + weak point work',
+    exercises: [
+      { name: 'Step Up (Machine or Dumbbell)', sets: '3 × 10 ea.', rest: '90s', note: 'Drive through heel. Full hip extension at top.', injury: 'ANKLE' },
+      { name: 'Chest Press (Machine)', sets: '4 × 10–12', rest: '90s', note: 'Shoulder-safe variation. Focus on chest squeeze.' },
+      { name: 'Lat Pulldown (Cable)', sets: '4 × 10–12', rest: '90s', note: 'Wide grip. Pull to upper chest. Control the negative.' },
+      { name: 'Seated Incline Curl (Dumbbell)', sets: '3 × 10–12', rest: '60s', note: 'Full stretch at bottom. Supinate at top.' },
+      { name: 'Leg Raise (Parallel Bars)', sets: '3 × 12–15', rest: '60s', note: 'Posterior pelvic tilt at top. Controlled negative.' },
+    ],
+    note: 'This is accessory work — not your heaviest session. Focus on mind-muscle connection and accumulated volume.'
+  },
+  {
+    day: 'Sunday', type: 'REST', typeColor: 'var(--text3)', label: 'Full Rest',
+    focus: 'Sleep, eat, recover',
+    exercises: [
+      { name: 'Morning routine', sets: '7–10 min', rest: '—', note: '90/90 hip, World\'s Greatest, Cat-Cow, deep squat, ankle circles. Non-negotiable.' },
+    ],
+    note: 'Full rest day. No training. Sleep is the most anabolic thing you can do today. Eat well, get 8 hours, prepare mentally for Monday.'
+  }
+];
+
+function renderOverview() {
+  const el = document.getElementById('plan-days');
+  if (!el || el.dataset.rendered) return;
+  el.dataset.rendered = '1';
+
+  el.innerHTML = PLAN_DAYS.map((d, i) => `
+    <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px">
+      <div onclick="togglePlanDay(${i})" style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer">
+        <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:${d.typeColor}26;color:${d.typeColor};font-family:var(--font-mono);font-weight:600;white-space:nowrap">${d.type}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700">${d.day} — ${d.label}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:1px">${d.focus}</div>
+        </div>
+        <span id="plan-chevron-${i}" style="color:var(--text3);font-size:11px;transition:transform 0.2s">▼</span>
+      </div>
+      <div id="plan-body-${i}" style="display:none;border-top:1px solid var(--border);padding:0 16px 14px">
+        <table style="width:100%;border-collapse:collapse;margin-top:12px">
+          <thead><tr>
+            <th style="font-size:10px;font-family:var(--font-mono);color:var(--text3);text-align:left;padding:0 0 8px;text-transform:uppercase;letter-spacing:0.08em;width:50%">Exercise</th>
+            <th style="font-size:10px;font-family:var(--font-mono);color:var(--text3);text-align:left;padding:0 0 8px;text-transform:uppercase;letter-spacing:0.08em">Sets</th>
+            <th style="font-size:10px;font-family:var(--font-mono);color:var(--text3);text-align:left;padding:0 0 8px;text-transform:uppercase;letter-spacing:0.08em">Rest</th>
+          </tr></thead>
+          <tbody>
+            ${d.exercises.map(e => `
+              <tr style="border-top:1px solid var(--border)">
+                <td style="padding:10px 8px 10px 0;vertical-align:top">
+                  <div style="font-size:13px;font-weight:600">${e.name}</div>
+                  ${e.injury ? `<span style="font-size:10px;background:var(--amber-dim);color:var(--amber);padding:1px 6px;border-radius:4px;font-family:var(--font-mono);margin-top:2px;display:inline-block">⚠ ${e.injury}</span>` : ''}
+                  <div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.5">${e.note}</div>
+                </td>
+                <td style="padding:10px 8px 10px 0;font-family:var(--font-mono);font-size:12px;color:var(--accent);white-space:nowrap;vertical-align:top">${e.sets}</td>
+                <td style="padding:10px 0;font-family:var(--font-mono);font-size:11px;color:var(--text3);white-space:nowrap;vertical-align:top">${e.rest}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        ${d.note ? `<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--font-mono)">${d.note}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function togglePlanDay(i) {
+  const body = document.getElementById('plan-body-' + i);
+  const chev = document.getElementById('plan-chevron-' + i);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
 let toastTimeout;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -3064,6 +3356,7 @@ function showToast(msg) {
 updateAll();
 renderTrainingScreen();
 updateIntegrationStatus();
+renderOverview();
 // Handle WHOOP OAuth callback if returning from auth
 handleWhoopCallback();
 </script>
