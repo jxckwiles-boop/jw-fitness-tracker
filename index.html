@@ -2449,9 +2449,43 @@ ACTUAL TARGETS (from his programme — these are gospel):
 - Carbs: 330g on training days, lower on rest days (~200g). Carbs are the performance lever.
 - Fat: 90g/day (hormones, joints, inflammation control)
 - Fibre: 30g+ daily
+HEVY TRAINING DATA — USE THIS TO DRIVE NUTRITION ADVICE:
+You receive full Hevy workout data with every message: today's session including every exercise, sets, reps and weight, plus the last 6 sessions with volume and muscle groups. Use this actively — not passively.
+
+Key rules:
+- Heavy leg day (leg press, RDL, squats, lunges, hip thrust) = carbs are critical. If carb intake is low relative to the volume, call it out specifically.
+- High total volume session (>5 tonnes) = treat calorie and protein targets as a floor, not a ceiling.
+- No session logged but it's a programme training day = factor into advice, mention it once without nagging.
+- Post-workout window: session logged but no food eaten within ~60 mins = flag the missed recovery window.
+- High weekly volume accumulation (3+ sessions, high tonnage) = more food and sleep needed. Make the connection explicit.
+- Legs trained yesterday = DOMS + elevated protein demand today for repair. Mention if protein is low.
+- Notable lifts or high weights = acknowledge briefly and connect to why today's nutrition matters for adaptation.
+
+Always be specific. "You did 4×8 Romanian deadlifts at 80kg today — posterior chain under load, your carbs tonight directly feed tomorrow's recovery" beats generic advice every time.
+
 - Meal timing matters: Breakfast (non-negotiable, high protein + high carb), Pre-train (60-90 min before, carb-forward), Post-train (protein + fast carbs within 60 min — most important recovery window), Lunch (largest whole-food meal), Evening (protein + healthy fats, lighter carbs), Before bed (casein/cottage cheese, ~30g protein — builds muscle overnight)
 
-TRAINING-SPECIFIC NUTRITION:
+WHOOP RECOVERY INTEGRATION — USE THIS DATA IN EVERY RESPONSE:
+You now receive live WHOOP data with every message. Use it proactively — don't wait to be asked.
+
+Recovery zones and what they mean for your advice:
+- GREEN (67–100%): Well recovered. Full training targets apply. Push carbs hard on training days — he needs the fuel and can use it. Don't be conservative.
+- YELLOW (34–66%): Moderate recovery. Train but be smart. Slight calorie/carb reduction on rest days is appropriate. Flag if nutrition contributed to the dip (e.g. under-eating previous day).
+- RED (0–33%): Poor recovery. This changes everything. Prioritise restoration nutrition: hit protein regardless, moderate carbs even on training days, emphasise anti-inflammatory foods (omega-3, turmeric), push sleep nutrition (magnesium, casein before bed). Don't push hard training. Flag overtraining risk if HRV has been declining multiple days.
+
+HRV context:
+- HRV dropping day-on-day = accumulating fatigue. Flag if nutrition is likely contributing (under-eating is the most common cause).
+- HRV below ~50ms (for his profile) = meaningful suppression. Treat like yellow/red regardless of recovery score.
+
+Strain context:
+- If yesterday's strain was high (>14) and today's recovery is yellow/red = classic under-fuelling signature. Call it out.
+- Low strain + low recovery = non-training stressor (sleep debt, illness, life stress). Nutrition advice shifts to restoration.
+
+Sleep performance:
+- Below 70% = flag. Poor sleep tanks HRV and recovery the next day. If he's also under-eating, compound this.
+- Recommend casein/cottage cheese before bed if sleep performance is poor.
+
+ALWAYS reference the actual WHOOP numbers in your response. Don't be vague. Say "your recovery is 48% — yellow zone" not "your recovery looks moderate."
 - Heavy training days (Mon/Wed): calories up, carbs significantly elevated — this is when performance nutrition matters most
 - Hypertrophy day (Sat): moderate increase
 - Rest days: lower carbs, maintain protein
@@ -2483,34 +2517,128 @@ You always ground feedback in the actual numbers. You are a performance coach, n
 
 // ── Context builder ──
 function buildNutritionContext() {
-  const today  = todayKey();
-  const totals = calcTotals(today);
-  const targets= getDynamicTargets();
-  const log    = getFoodLog(today);
-  const weights= getWeightLog().slice(-14);
+  const today   = todayKey();
+  const totals  = calcTotals(today);
+  const targets = getDynamicTargets();
+  const log     = getFoodLog(today);
+  const weights = getWeightLog().slice(-14);
   const sessions= getSessionLog().filter(s=>s.date===today);
-  const prog   = getTodaysProgramme();
-  const hour   = new Date().getHours();
-  const nc     = Math.max(0, totals.c-(totals.fibre||0));
+  const prog    = getTodaysProgramme();
+  const hour    = new Date().getHours();
+  const nc      = Math.max(0, totals.c-(totals.fibre||0));
+
+  // WHOOP data
+  const whoop = getStore('jw_whoop_data', null);
+  const whoopLastSync = getStore('jw_whoop_last_sync','');
+  let whoopContext = 'Not connected';
+  if (whoop) {
+    const rec = whoop.recovery ?? null;
+    const zone = rec === null ? 'unknown'
+               : rec >= 67 ? 'GREEN (well recovered — can push hard)'
+               : rec >= 34 ? 'YELLOW (moderate recovery — train smart)'
+               :             'RED (poor recovery — prioritise restoration)';
+    const syncAge = whoopLastSync
+      ? Math.round((Date.now()-new Date(whoopLastSync).getTime())/3600000) + ' hours ago'
+      : 'unknown';
+    whoopContext = {
+      recoveryScore:    rec !== null ? rec + '%' : 'not available',
+      recoveryZone:     zone,
+      hrv:              whoop.hrv ? whoop.hrv + 'ms' : 'not available',
+      restingHR:        whoop.restingHR ? whoop.restingHR + 'bpm' : 'not available',
+      strain:           whoop.strain ?? 'not available',
+      sleepPerformance: whoop.sleepPerf ? whoop.sleepPerf + '%' : (whoop.sleepHours ? whoop.sleepHours + 'h' : 'not available'),
+      lastSynced:       syncAge
+    };
+  }
+
+  // Hevy training data — full detail for nutritionist context
+  const hevySessions = getStore('jw_hevy_sessions', []);
+  const hevyLastSync = getStore('jw_hevy_last_sync', '');
+
+  // Today's session from Hevy
+  const todayHevy = hevySessions.find(s => s.date === today);
+  let todaySessionDetail = 'No session logged today';
+  if (todayHevy) {
+    const exList = (todayHevy.exercises || []).map(e => {
+      const vol = e.volume ? ` (${e.sets}×${e.bestReps} @ ${e.bestWeight}kg, vol ${Math.round(e.volume)}kg)` : '';
+      const bw = e.isBodyweight ? ' [bodyweight]' : '';
+      return `  - ${e.name}${bw}${vol}`;
+    }).join('\n');
+    todaySessionDetail = `${todayHevy.title || todayHevy.sessionType} · ${todayHevy.duration || '?'} min · ${Math.round((todayHevy.totalVolume||0)/1000*10)/10}t total volume\nExercises:\n${exList || '  (no exercise detail)'}`;
+  }
+
+  // Last 7 days of sessions with muscle groups and volume
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+  const recentSessions = hevySessions
+    .filter(s => new Date(s.date+'T12:00:00') >= weekAgo && s.date !== today)
+    .slice(0, 6);
+
+  const recentTraining = recentSessions.length
+    ? recentSessions.map(s => {
+        const muscles = (s.exercises||[]).map(e=>e.muscleGroup).filter(Boolean);
+        const uniqueMuscles = [...new Set(muscles)].slice(0,4).join(', ');
+        const vol = s.totalVolume ? ` · ${Math.round(s.totalVolume/1000*10)/10}t` : '';
+        const rpe = s.rpe ? ` · RPE ${s.rpe}` : '';
+        const dur = s.duration ? ` · ${s.duration}min` : '';
+        return `${s.date}: ${s.title||s.sessionType}${dur}${vol}${rpe}${uniqueMuscles ? ` [${uniqueMuscles}]` : ''}`;
+      }).join('\n')
+    : 'No recent sessions in last 7 days';
+
+  // Weekly training volume summary
+  const weekVol = recentSessions.reduce((a,s)=>a+(s.totalVolume||0), 0);
+  const weekSessions = recentSessions.length + (todayHevy ? 1 : 0);
+  const trainingLoad = {
+    sessionsThisWeek: weekSessions,
+    totalVolumeThisWeek: Math.round(weekVol/1000*10)/10 + 't',
+    todaySession: todaySessionDetail,
+    last6Sessions: recentTraining,
+    hevyLastSynced: hevyLastSync ? Math.round((Date.now()-new Date(hevyLastSync).getTime())/3600000) + ' hours ago' : 'never'
+  };
+
+  // 7-day nutrition averages
+  let avgTotals = { cal:0, p:0, c:0, f:0, days:0 };
+  for (let i=1; i<=7; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const t = calcTotals(key);
+    if (getFoodLog(key).length > 0) {
+      avgTotals.cal += t.cal; avgTotals.p += t.p;
+      avgTotals.c += t.c; avgTotals.f += t.f; avgTotals.days++;
+    }
+  }
+  const weekAvg = avgTotals.days > 0 ? {
+    calories: Math.round(avgTotals.cal/avgTotals.days),
+    protein:  Math.round(avgTotals.p/avgTotals.days),
+    carbs:    Math.round(avgTotals.c/avgTotals.days),
+    fat:      Math.round(avgTotals.f/avgTotals.days),
+    daysLogged: avgTotals.days
+  } : 'No data yet';
 
   return {
-    date:        today,
-    dayOfWeek:   new Date().toLocaleDateString('en-GB',{weekday:'long'}),
-    timeOfDay:   hour<12?'morning':hour<17?'afternoon':'evening',
-    programme:   prog?.name||'Rest day',
-    sessionLogged: sessions[0]?.sessionType||'none',
+    date:           today,
+    dayOfWeek:      new Date().toLocaleDateString('en-GB',{weekday:'long'}),
+    timeOfDay:      hour<12?'morning':hour<17?'afternoon':'evening',
+    programme:      prog?.name||'Rest day',
+    sessionLogged:  sessions[0]?.sessionType||'none',
     targets,
-    consumed:    { calories:Math.round(totals.cal), protein:Math.round(totals.p),
-                   carbs:Math.round(totals.c), fat:Math.round(totals.f),
-                   fibre:Math.round(totals.fibre||0), netCarbs:Math.round(nc) },
-    remaining:   { calories:Math.round(targets.cal-totals.cal),
-                   protein:Math.round(targets.p-totals.p),
-                   carbs:Math.round(targets.c-totals.c) },
-    mealsLogged: log.length,
-    meals:       log.map(f=>`${f.name} (${Math.round(f.cal)}kcal, ${Math.round(f.p)}g P, ${Math.round(f.c)}g C, ${Math.round(f.f)}g F)`).join('\n')||'Nothing logged yet',
-    weightTrend: weights.length>1
+    consumed: {
+      calories: Math.round(totals.cal), protein: Math.round(totals.p),
+      carbs:    Math.round(totals.c),   fat:      Math.round(totals.f),
+      fibre:    Math.round(totals.fibre||0), netCarbs: Math.round(nc)
+    },
+    remaining: {
+      calories: Math.round(targets.cal-totals.cal),
+      protein:  Math.round(targets.p-totals.p),
+      carbs:    Math.round(targets.c-totals.c)
+    },
+    mealsLogged:    log.length,
+    meals:          log.map(f=>`${f.name} (${Math.round(f.cal)}kcal, ${Math.round(f.p)}g P, ${Math.round(f.c)}g C, ${Math.round(f.f)}g F)`).join('\n')||'Nothing logged yet',
+    weightTrend:    weights.length>1
       ? `Latest: ${weights[weights.length-1].weight}kg. Change over ${weights.length} readings: ${(weights[weights.length-1].weight-weights[0].weight>0?'+':'')}${(weights[weights.length-1].weight-weights[0].weight).toFixed(1)}kg`
-      : weights.length===1?`${weights[0].weight}kg (single reading)`:'No weight logged'
+      : weights.length===1 ? `${weights[0].weight}kg (single reading)` : 'No weight logged',
+    whoop:          whoopContext,
+    training:       trainingLoad,
+    weeklyNutritionAverage: weekAvg
   };
 }
 
