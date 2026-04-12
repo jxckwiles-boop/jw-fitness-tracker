@@ -629,13 +629,6 @@
         <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">Apply at developer.whoop.com — approval takes 1–2 weeks. Once approved, paste your access token here.</div>
       </div>
 
-      <!-- Profile -->
-      <div class="section-title" style="margin:20px 0 10px">PROFILE</div>
-      <div class="settings-row">
-        <div><div class="settings-label">Bodyweight</div><div class="settings-sub">kg — used for bodyweight exercise volume</div></div>
-        <input class="settings-input" type="number" id="set-bw" placeholder="82" step="0.1" onchange="saveSettings()">
-      </div>
-
       <!-- Daily targets -->
       <div class="section-title" style="margin:20px 0 10px">DAILY TARGETS</div>
       <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px;line-height:1.6">These are your base targets. The app adjusts them automatically based on your training day.</div>
@@ -1194,7 +1187,6 @@ function saveSettings() {
     p:   +document.getElementById('set-p').value || 0,
     c:   +document.getElementById('set-c').value || 0,
     f:   +document.getElementById('set-f').value || 0,
-    bw:  +document.getElementById('set-bw')?.value || 82,
   };
   setStore('jw_settings', s);
   updateAll();
@@ -1761,7 +1753,7 @@ function logWeight() {
   closeModal('modal-weight');
   document.getElementById('weight-input').value = '';
   updateAll();
-  showToast('Weight logged');
+  showToast('Weight logged — ' + val + 'kg');
 }
 
 function renderWeight() {
@@ -2078,8 +2070,6 @@ function renderSettings() {
   document.getElementById('set-p').value   = s.p   || '';
   document.getElementById('set-c').value   = s.c   || '';
   document.getElementById('set-f').value   = s.f   || '';
-  const bwEl = document.getElementById('set-bw');
-  if (bwEl) bwEl.value = s.bw || '';
   updateIntegrationStatus();
 
   // API key field (add if not present)
@@ -2658,8 +2648,9 @@ async function syncHevy() {
     }
 
     if (statusEl) statusEl.textContent=`Processing ${allWorkouts.length} workouts…`;
-    const bw = +getStore('jw_settings',{}).bw || 82;
-    const processed = allWorkouts.map(w => processHevyWorkout(w, bw));
+    const weightLog = getWeightLog();
+    const latestBW = weightLog.length ? weightLog[weightLog.length-1].weight : 82;
+    const processed = allWorkouts.map(w => processHevyWorkout(w, latestBW));
 
     setStore('jw_hevy_sessions', processed);
     setStore('jw_hevy_last_sync', new Date().toISOString());
