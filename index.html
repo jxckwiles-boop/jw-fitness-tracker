@@ -578,26 +578,82 @@
   <div class="screen" id="screen-settings">
     <div class="page-header">
       <div class="page-title">Settings</div>
-      <div class="page-subtitle">Targets & preferences</div>
+      <div class="page-subtitle">Targets & integrations</div>
     </div>
     <div class="scroll-area">
-      <div class="section-title" style="margin-bottom:10px">DAILY TARGETS</div>
 
+      <!-- Integrations — top priority now -->
+      <div class="section-title" style="margin-bottom:10px">INTEGRATIONS</div>
+
+      <!-- Claude API -->
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700">Claude API</div>
+            <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:1px">AI nutritionist · restaurant mode · photo scan</div>
+          </div>
+          <div id="claude-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+        </div>
+        <input type="password" id="api-key-input" placeholder="sk-ant-…" style="font-family:var(--font-mono);font-size:13px;margin-bottom:8px">
+        <button class="btn btn-ghost" onclick="saveApiKey()" style="padding:10px">Save Claude key</button>
+      </div>
+
+      <!-- Hevy API -->
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700">Hevy</div>
+            <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:1px">Auto-sync workouts · PRs · volume · muscle data</div>
+          </div>
+          <div id="hevy-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+        </div>
+        <input type="password" id="hevy-key-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="font-family:var(--font-mono);font-size:13px;margin-bottom:8px">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="saveHevyKey()" style="padding:10px;flex:1">Save Hevy key</button>
+          <button class="btn btn-primary" onclick="syncHevy()" id="hevy-sync-btn" style="padding:10px;flex:1">Sync now</button>
+        </div>
+        <div id="hevy-sync-status" style="font-size:12px;font-family:var(--font-mono);color:var(--text3);margin-top:8px;display:none"></div>
+        <div id="hevy-last-sync" style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:4px"></div>
+      </div>
+
+      <!-- WHOOP API -->
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700">WHOOP</div>
+            <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:1px">Recovery · HRV · strain · sleep · cardio sessions</div>
+          </div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--amber)">Pending approval</div>
+        </div>
+        <input type="password" id="whoop-key-input" placeholder="Paste access token when approved" style="font-family:var(--font-mono);font-size:13px;margin-bottom:8px" disabled>
+        <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">Apply at developer.whoop.com — approval takes 1–2 weeks. Once approved, paste your access token here.</div>
+      </div>
+
+      <!-- Profile -->
+      <div class="section-title" style="margin:20px 0 10px">PROFILE</div>
       <div class="settings-row">
-        <div><div class="settings-label">Calories</div><div class="settings-sub">kcal per day</div></div>
-        <input class="settings-input" type="number" id="set-cal" placeholder="2500" onchange="saveSettings()">
+        <div><div class="settings-label">Bodyweight</div><div class="settings-sub">kg — used for bodyweight exercise volume</div></div>
+        <input class="settings-input" type="number" id="set-bw" placeholder="82" step="0.1" onchange="saveSettings()">
+      </div>
+
+      <!-- Daily targets -->
+      <div class="section-title" style="margin:20px 0 10px">DAILY TARGETS</div>
+      <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px;line-height:1.6">These are your base targets. The app adjusts them automatically based on your training day.</div>
+      <div class="settings-row">
+        <div><div class="settings-label">Calories</div><div class="settings-sub">kcal base (training days)</div></div>
+        <input class="settings-input" type="number" id="set-cal" placeholder="2900" onchange="saveSettings()">
       </div>
       <div class="settings-row">
         <div><div class="settings-label">Protein</div><div class="settings-sub">grams per day</div></div>
-        <input class="settings-input" type="number" id="set-p" placeholder="180" onchange="saveSettings()">
+        <input class="settings-input" type="number" id="set-p" placeholder="160" onchange="saveSettings()">
       </div>
       <div class="settings-row">
-        <div><div class="settings-label">Carbs</div><div class="settings-sub">grams per day</div></div>
-        <input class="settings-input" type="number" id="set-c" placeholder="200" onchange="saveSettings()">
+        <div><div class="settings-label">Carbs</div><div class="settings-sub">grams (training days)</div></div>
+        <input class="settings-input" type="number" id="set-c" placeholder="330" onchange="saveSettings()">
       </div>
       <div class="settings-row">
         <div><div class="settings-label">Fat</div><div class="settings-sub">grams per day</div></div>
-        <input class="settings-input" type="number" id="set-f" placeholder="80" onchange="saveSettings()">
+        <input class="settings-input" type="number" id="set-f" placeholder="90" onchange="saveSettings()">
       </div>
 
       <div class="section-title" style="margin:20px 0 10px">WEEKLY AVERAGES</div>
@@ -608,7 +664,6 @@
       <div style="margin-top:20px">
         <button class="btn btn-danger" onclick="clearToday()">Clear today's logs</button>
       </div>
-
       <div style="margin-top:10px">
         <button class="btn btn-ghost" onclick="exportData()">Export data (JSON)</button>
       </div>
@@ -1139,6 +1194,7 @@ function saveSettings() {
     p:   +document.getElementById('set-p').value || 0,
     c:   +document.getElementById('set-c').value || 0,
     f:   +document.getElementById('set-f').value || 0,
+    bw:  +document.getElementById('set-bw')?.value || 82,
   };
   setStore('jw_settings', s);
   updateAll();
@@ -2022,6 +2078,9 @@ function renderSettings() {
   document.getElementById('set-p').value   = s.p   || '';
   document.getElementById('set-c').value   = s.c   || '';
   document.getElementById('set-f').value   = s.f   || '';
+  const bwEl = document.getElementById('set-bw');
+  if (bwEl) bwEl.value = s.bw || '';
+  updateIntegrationStatus();
 
   // API key field (add if not present)
   if (!document.getElementById('api-key-row')) {
@@ -2518,6 +2577,176 @@ function clearNutritionistChat(){
 
 function nutrInputKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendNutritionistMessage();}}
 
+// ══════════════════════════════════════════════
+//  HEVY API INTEGRATION
+// ══════════════════════════════════════════════
+const HEVY_BASE = 'https://api.hevyapp.com/v1';
+
+const BODYWEIGHT_EXERCISES = [
+  'pull-up','pull up','chin-up','chin up','push-up','push up','dip',
+  'tricep dip','leg raise','parallel bar','bodyweight squat','pistol squat',
+  'muscle up','handstand','inverted row'
+];
+
+function isBodyweightExercise(name) {
+  const n = (name||'').toLowerCase();
+  return BODYWEIGHT_EXERCISES.some(bw => n.includes(bw));
+}
+
+function getHevyKey() { return getStore('jw_hevy_key',''); }
+
+function saveHevyKey() {
+  const val = document.getElementById('hevy-key-input')?.value?.trim();
+  if (!val||val.includes('•')) { showToast('Enter your Hevy API key'); return; }
+  setStore('jw_hevy_key', val);
+  document.getElementById('hevy-key-input').value = '';
+  document.getElementById('hevy-key-input').placeholder = val.slice(0,8)+'••••••••••••';
+  updateIntegrationStatus();
+  showToast('Hevy key saved — tap Sync now');
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input')?.value?.trim();
+  if (val && !val.includes('•')) {
+    setStore('jw_api_key', val);
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('api-key-input').placeholder = val.slice(0,8)+'••••••••••••';
+    updateIntegrationStatus();
+    showToast('Claude API key saved');
+  }
+}
+
+function updateIntegrationStatus() {
+  const claudeKey = getStore('jw_api_key','');
+  const hevyKey   = getHevyKey();
+  const cd = document.getElementById('claude-status-dot');
+  const hd = document.getElementById('hevy-status-dot');
+  if (cd) cd.style.background = claudeKey ? 'var(--accent)' : 'var(--text3)';
+  if (hd) hd.style.background = hevyKey   ? 'var(--accent)' : 'var(--text3)';
+  const lastSync = getStore('jw_hevy_last_sync','');
+  const el = document.getElementById('hevy-last-sync');
+  if (el && lastSync) {
+    const d = new Date(lastSync);
+    el.textContent = 'Last synced: ' + d.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+async function syncHevy() {
+  const key = getHevyKey();
+  if (!key) { showToast('Add your Hevy API key first'); return; }
+  const btn = document.getElementById('hevy-sync-btn');
+  const statusEl = document.getElementById('hevy-sync-status');
+  if (btn) { btn.textContent='Syncing…'; btn.disabled=true; }
+  if (statusEl) { statusEl.style.display=''; statusEl.style.color='var(--text3)'; statusEl.textContent='Connecting to Hevy…'; }
+
+  try {
+    let allWorkouts=[], page=1;
+    while (page<=20) {
+      if (statusEl) statusEl.textContent=`Fetching workouts (page ${page})…`;
+      const res = await fetch(`${HEVY_BASE}/workouts?page=${page}&pageSize=10`,{
+        headers:{'api-key':key,'accept':'application/json'}
+      });
+      if (!res.ok) {
+        if (res.status===401) throw new Error('Invalid API key');
+        throw new Error('Hevy error '+res.status);
+      }
+      const data = await res.json();
+      const ws = data.workouts||[];
+      allWorkouts = allWorkouts.concat(ws);
+      if (ws.length < 10) break;
+      page++;
+    }
+
+    if (statusEl) statusEl.textContent=`Processing ${allWorkouts.length} workouts…`;
+    const bw = +getStore('jw_settings',{}).bw || 82;
+    const processed = allWorkouts.map(w => processHevyWorkout(w, bw));
+
+    setStore('jw_hevy_sessions', processed);
+    setStore('jw_hevy_last_sync', new Date().toISOString());
+    setPRs(extractPRsFromHistory(processed));
+
+    // Inject today's Hevy session into local log if not already there
+    const today = todayKey();
+    const todayW = processed.find(s=>s.date===today);
+    if (todayW) {
+      const local = getSessionLog();
+      if (!local.find(s=>s.date===today&&s.source==='hevy')) {
+        local.push(todayW); setSessionLog(local);
+      }
+    }
+
+    if (statusEl) { statusEl.textContent=`✓ ${allWorkouts.length} workouts · ${Object.keys(getPRs()).length} PRs`; statusEl.style.color='var(--accent)'; }
+    updateIntegrationStatus(); renderTrainingScreen(); updateAll();
+    showToast(`Hevy synced — ${allWorkouts.length} workouts`);
+
+  } catch(err) {
+    if (statusEl) { statusEl.textContent=err.message; statusEl.style.color='var(--red)'; }
+    showToast('Sync failed: '+err.message.slice(0,35));
+  } finally {
+    if (btn) { btn.textContent='Sync now'; btn.disabled=false; }
+  }
+}
+
+function processHevyWorkout(w, bodyweight) {
+  const exercises = (w.exercises||[]).map(ex => {
+    const isBW = isBodyweightExercise(ex.title||'');
+    const sets = (ex.sets||[]).map(s=>({reps:s.reps||0,weight:s.weight_kg||0}));
+    const best = sets.reduce((b,s)=>{
+      const v = isBW?(s.reps*bodyweight):(s.weight*s.reps);
+      const bv= isBW?(b.reps*bodyweight):(b.weight*b.reps);
+      return v>bv?s:b;
+    }, sets[0]||{reps:0,weight:0});
+    const volume = sets.reduce((acc,s)=>acc+(s.reps*(isBW?bodyweight:s.weight)),0);
+    return { name:ex.title||'Unknown', sets:sets.length,
+             bestReps:best.reps||0, bestWeight:isBW?bodyweight:(best.weight||0),
+             isBodyweight:isBW, volume:Math.round(volume),
+             muscleGroup:ex.muscle_group||'' };
+  });
+
+  const totalVolume = exercises.reduce((a,e)=>a+e.volume,0);
+  const date = (w.start_time||'').slice(0,10)||todayKey();
+  const duration = w.duration||(w.end_time&&w.start_time
+    ?Math.round((new Date(w.end_time)-new Date(w.start_time))/60000):null);
+
+  return { id:w.id||Date.now().toString(), date, source:'hevy', type:'weights',
+    sessionType:guessSessionType(exercises.map(e=>e.name)),
+    title:w.title||'', duration, totalVolume:Math.round(totalVolume),
+    exercises, notes:w.description||'', rpe:null };
+}
+
+function guessSessionType(names) {
+  const s = names.join(' ').toLowerCase();
+  const leg  = /squat|lunge|leg press|leg curl|rdl|deadlift|hip thrust|calf|step.?up/.test(s);
+  const push = /bench|chest|press|dip|tricep|shoulder|ohp|overhead|incline/.test(s);
+  const pull = /pull.?up|chin|row|lat|curl|bicep|pulldown/.test(s);
+  const hinge= /deadlift|rdl|romanian|good morning/.test(s);
+  if (leg&&push) return 'lower_push';
+  if ((pull||hinge)&&!leg) return 'pull_hinge';
+  if (push&&!leg) return 'hypertrophy';
+  return 'custom';
+}
+
+function extractPRsFromHistory(sessions) {
+  const prs={};
+  [...sessions].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{
+    (s.exercises||[]).forEach(ex=>{
+      const key=ex.name.toLowerCase();
+      if (!prs[key]||ex.bestWeight>prs[key].weight) {
+        prs[key]={name:ex.name,weight:ex.bestWeight,reps:ex.bestReps,sets:ex.sets,date:s.date};
+      }
+    });
+  });
+  return prs;
+}
+
+function getAllSessions() {
+  const hevy  = getStore('jw_hevy_sessions',[]);
+  const local = getSessionLog().filter(s=>s.source!=='hevy');
+  const merged= [...hevy];
+  local.forEach(ls=>{ if(!merged.find(hs=>hs.date===ls.date&&hs.source==='hevy')) merged.push(ls); });
+  return merged.sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
 let toastTimeout;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -2532,6 +2761,7 @@ function showToast(msg) {
 // ══════════════════════════════════════════════
 updateAll();
 renderTrainingScreen();
+updateIntegrationStatus();
 </script>
 </body>
 </html>
