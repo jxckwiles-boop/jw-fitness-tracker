@@ -2824,38 +2824,39 @@ async function syncWhoop() {
   if (btn) { btn.textContent='Syncing…'; btn.disabled=true; }
   if (statusEl) { statusEl.style.display=''; statusEl.style.color='var(--text3)'; statusEl.textContent='Fetching recovery…'; }
   try {
-    const [recovery, cycles, sleepData] = await Promise.all([
-      whoopFetch('/recovery?limit=1').catch(()=>null),
-      whoopFetch('/cycle?limit=1').catch(()=>null),
-      whoopFetch('/sleep?limit=1').catch(()=>null),
-    ]);
-    console.log('WHOOP recovery raw:', JSON.stringify(recovery));
-    console.log('WHOOP cycles raw:', JSON.stringify(cycles));
-    console.log('WHOOP sleep raw:', JSON.stringify(sleepData));
-    const d = { synced: new Date().toISOString(), recovery:null, hrv:null, strain:null, sleepHours:null, restingHR:null };
-    if (recovery?.records?.[0]) {
-      const r = recovery.records[0];
-      const score = r.score || {};
-      d.recovery  = Math.round(score.recovery_score ?? score.user_calibrating ? 0 : 0);
-      d.hrv       = Math.round(score.hrv_rmssd_milli || score.hrv || 0);
-      d.restingHR = Math.round(score.resting_heart_rate || score.rhr || 0);
-      // WHOOP sometimes nests differently
-      if (!d.recovery && r.recovery_score) d.recovery = Math.round(r.recovery_score);
+    const d = { synced: new Date().toISOString(), recovery:null, hrv:null, strain:null, sleepHours:null, sleepPerf:null, restingHR:null };
+
+    // Step 1: Get latest cycle for strain + cycle ID
+    if (statusEl) statusEl.textContent='Fetching cycle…';
+    const cycleData = await whoopFetch('/cycle?limit=1').catch(()=>null);
+    let cycleId = null;
+    if (cycleData?.records?.[0]) {
+      const c = cycleData.records[0];
+      cycleId = c.id;
+      if (c.score?.strain != null) d.strain = parseFloat(c.score.strain.toFixed(1));
     }
-    if (cycles?.records?.[0]) {
-      const c = cycles.records[0];
-      const strain = c.score?.strain ?? c.strain ?? null;
-      d.strain = strain !== null ? parseFloat(strain.toFixed(1)) : null;
+
+    // Step 2: Get recovery for that cycle
+    if (cycleId) {
+      if (statusEl) statusEl.textContent='Fetching recovery…';
+      const recovery = await whoopFetch(`/cycle/${cycleId}/recovery`).catch(()=>null);
+      if (recovery?.score) {
+        d.recovery  = Math.round(recovery.score.recovery_score   ?? 0);
+        d.hrv       = Math.round(recovery.score.hrv_rmssd_milli  ?? 0);
+        d.restingHR = Math.round(recovery.score.resting_heart_rate ?? 0);
+      }
     }
+
+    // Step 3: Get latest sleep
+    if (statusEl) statusEl.textContent='Fetching sleep…';
+    const sleepData = await whoopFetch('/activity/sleep?limit=1').catch(()=>null);
     if (sleepData?.records?.[0]) {
       const s = sleepData.records[0];
-      const summary = s.score?.stage_summary || s.stage_summary || {};
-      const ms = summary.total_in_bed_time_milli
-              || summary.total_sleep_time_milli
-              || s.score?.total_sleep_time_milli
-              || 0;
-      d.sleepHours = ms ? Math.round((ms/3600000)*10)/10 : null;
+      d.sleepPerf = s.score?.sleep_performance_percentage ?? null;
+      const ms = s.score?.stage_summary?.total_in_bed_time_milli || 0;
+      d.sleepHours = ms ? Math.round((ms / 3600000) * 10) / 10 : null;
     }
+
     setStore('jw_whoop_data', d);
     setStore('jw_whoop_last_sync', new Date().toISOString());
     renderWhoopDashCard(); updateIntegrationStatus(); updateAll();
@@ -2885,8 +2886,8 @@ function renderWhoopDashCard() {
   const el = (id)=>document.getElementById(id);
   if (el('whoop-recovery')) { el('whoop-recovery').textContent=rec+'%'; el('whoop-recovery').style.color=col; }
   if (el('whoop-hrv'))      el('whoop-hrv').textContent = data.hrv ? data.hrv+'ms' : '—';
-  if (el('whoop-strain'))   el('whoop-strain').textContent = data.strain||'—';
-  if (el('whoop-sleep'))    el('whoop-sleep').textContent = data.sleepHours ? data.sleepHours+'h' : '—';
+  if (el('whoop-strain'))   el('whoop-strain').textContent = data.strain ?? '—';
+  if (el('whoop-sleep'))    el('whoop-sleep').textContent = data.sleepPerf ? data.sleepPerf+'%' : (data.sleepHours ? data.sleepHours+'h' : '—');
   if (el('whoop-recovery-fill')) { el('whoop-recovery-fill').style.width=rec+'%'; el('whoop-recovery-fill').style.background=col; }
   if (el('whoop-advice')) {
     el('whoop-advice').style.color=col;
