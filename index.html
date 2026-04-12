@@ -2072,36 +2072,8 @@ function renderSettings() {
   document.getElementById('set-f').value   = s.f   || '';
   updateIntegrationStatus();
 
-  // API key field (add if not present)
-  if (!document.getElementById('api-key-row')) {
-    const settingsArea = document.querySelector('#screen-settings .scroll-area');
-    const apiDiv = document.createElement('div');
-    apiDiv.id = 'api-key-row';
-    apiDiv.innerHTML = `
-      <div class="section-title" style="margin:20px 0 10px">AI FEATURES</div>
-      <div class="settings-row">
-        <div><div class="settings-label">Claude API key</div><div class="settings-sub">For restaurant mode & AI insights</div></div>
-      </div>
-      <div class="input-group" style="margin-top:-2px">
-        <input type="text" id="api-key-input" placeholder="sk-ant-..." style="font-family:var(--font-mono);font-size:13px">
-      </div>
-      <button class="btn btn-ghost" style="margin-bottom:10px" onclick="saveApiKey()">Save API key</button>`;
-    const clearBtn = settingsArea.querySelector('div[style*="margin-top:20px"]');
-    settingsArea.insertBefore(apiDiv, clearBtn);
-  }
-  const keyInput = document.getElementById('api-key-input');
-  if (keyInput) {
-    const stored = getStore('jw_api_key', '');
-    keyInput.value = stored ? stored.slice(0,8) + '••••••••••••••••' : '';
-  }
-
   // Weekly averages
   renderWeeklyAverages();
-}
-
-function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  if (val && !val.includes('•')) { setStore('jw_api_key', val); showToast('API key saved'); }
 }
 
 function renderWeeklyAverages() {
