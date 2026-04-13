@@ -3126,6 +3126,8 @@ function markdownToHtml(text) {
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
 }
+
+function nutrInputKeydown(e) {
   // Enter alone = linebreak (default textarea behaviour, do nothing)
   // Shift+Enter = send
   if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); sendNutritionistMessage(); }
