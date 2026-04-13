@@ -404,7 +404,7 @@
               <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="prog-f" style="background:var(--amber);width:0%"></div></div>
             </div>
             <div class="macro-pill">
-              <div class="macro-pill-label">Net Carbs</div>
+              <div class="macro-pill-label">Fibre</div>
               <div class="macro-pill-val" id="dash-nc">0g</div>
               <div class="macro-pill-sub" id="dash-cal-target">/ — kcal</div>
             </div>
@@ -547,8 +547,9 @@
           <div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">FAT</div><div style="font-size:16px;font-weight:800;color:var(--amber)" id="n-f">0g</div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)" id="n-f-t">/ —</div></div>
         </div>
         <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Net carbs:</span>
+          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Fibre:</span>
           <span class="netcarb-badge" id="n-nc">0g</span>
+          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-left:4px">/ 30g target</span>
         </div>
       </div>
 
@@ -1445,11 +1446,11 @@ function updateAll() {
   document.getElementById('dash-p').textContent = Math.round(totals.p) + 'g';
   document.getElementById('dash-c').textContent = Math.round(totals.c) + 'g';
   document.getElementById('dash-f').textContent = Math.round(totals.f) + 'g';
-  document.getElementById('dash-nc').textContent = Math.round(nc) + 'g';
+  document.getElementById('dash-nc').textContent = Math.round(totals.fibre||0) + 'g';
+  document.getElementById('dash-cal-target').textContent = '/ 30g target';
   document.getElementById('dash-p-target').textContent = effectiveTargets.p ? '/ ' + effectiveTargets.p + 'g' : '/ —';
   document.getElementById('dash-c-target').textContent = effectiveTargets.c ? '/ ' + effectiveTargets.c + 'g' : '/ —';
   document.getElementById('dash-f-target').textContent = effectiveTargets.f ? '/ ' + effectiveTargets.f + 'g' : '/ —';
-  document.getElementById('dash-cal-target').textContent = effectiveTargets.cal ? '/ ' + effectiveTargets.cal + ' kcal' : '/ — kcal';
 
   // Progress bars
   document.getElementById('prog-p').style.width = (pPct * 100) + '%';
@@ -2768,21 +2769,46 @@ INJURY CONTEXT (relevant for nutrition advice):
 - Recurrent ankle sprains: collagen-supporting nutrition (vitamin C, glycine) beneficial
 
 COACHING STYLE:
-- Firm but encouraging. Elite S&C dietician energy — direct, no fluff, genuinely invested in results
-- Call out problems clearly but once only. Say it, explain why it matters, move on.
-- Use actual numbers from his log — never be vague
+- Firm but encouraging. Elite S&C dietician energy — direct, no fluff, genuinely invested in results.
+- British English. Use actual numbers — never be vague.
 - Acknowledge when he nails it. Positive reinforcement is part of elite coaching.
-- Short and punchy. Use line breaks. British English. No walls of text.
-- Performance framing: not just "eat more" — "you need the fuel to express the training"
+- Performance framing: not just "eat more" — "you need the fuel to express the training."
+
+RESPONSE FORMAT FOR MEAL LOGGING:
+When JW logs a meal, structure your response like this:
+
+**[Meal name] — Breakdown**
+List each ingredient with its approximate macros:
+- [Ingredient]: ~Xkcal · Xg P · Xg C · Xg F
+
+**Meal Total**
+- Calories: ~X kcal
+- Protein: Xg [✅ or ❌ with brief note]
+- Carbs: Xg [✅ or ❌]
+- Fat: Xg
+
+**Feedback**
+2–3 specific, numbered points. Lead with the most important issue. Be direct.
+If protein is low, say exactly what to add next time (e.g. "Add 1 scoop whey or 200g Greek yoghurt").
+
+**Running Total**
+- Calories: X / [target] kcal
+- Protein: Xg / [target]g
+- Carbs: Xg / [target]g
+- Fat: Xg / [target]g
+
+**Next Move**
+One or two sentences on what the next meal needs to do. Specific, not vague.
+
+Keep it tight. No unnecessary filler. If something is good, say it's good and move on.
 
 KEY FLAGS TO ENFORCE:
-- Protein under 130g = serious flag
+- Protein under 130g by end of day = serious flag
 - Missing breakfast on a training day = flag it
-- Training day total under 2,400 kcal = flag — he is under-fuelling performance
-- Rest day over 3,200 kcal (especially carbs) = gentle flag
+- Training day total under 2,400 kcal = flag — under-fuelling performance
+- Rest day over 3,200 kcal = gentle flag
 - Weight flat for 3+ weeks = suggest 200 kcal increase
-- Weight rising faster than 0.5kg/2 weeks = flag potential excess
-- Fibre under 20g = flag for gut health and satiety
+- Fibre under 20g = flag for gut health
 - No post-workout food within 60 min on training days = flag the missed recovery window
 
 You always ground feedback in the actual numbers. You are a performance coach, not a wellness chatbot.
