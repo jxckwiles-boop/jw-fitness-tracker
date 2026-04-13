@@ -334,7 +334,7 @@
           <div class="page-subtitle" id="dash-date">—</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <button onclick="openNutritionistModal()" style="padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-size:12px;font-family:var(--font-mono);cursor:pointer;font-weight:500">+ Log / Coach</button>
+          <button onclick="openNutritionistModal()" style="padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-size:12px;font-family:var(--font-mono);cursor:pointer;font-weight:500">+ Log / Reggie</button>
           <div style="text-align:right">
             <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">STREAK</div>
             <div style="font-size:22px;font-weight:800;color:var(--accent)" id="streak-count">0</div>
@@ -1269,8 +1269,8 @@
       <div class="modal-handle"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0">
         <div>
-          <div class="modal-title" style="margin:0">AI Coach</div>
-          <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:2px">Log meals · get feedback · ask anything</div>
+          <div class="modal-title" style="margin:0">Reggie</div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:2px">Your AI coach · log meals · get feedback</div>
         </div>
         <button onclick="clearNutritionistChat()" style="font-size:11px;font-family:var(--font-mono);color:var(--text3);background:none;border:none;cursor:pointer">Clear</button>
       </div>
@@ -2691,7 +2691,20 @@ function renderPRs() {
 // ══════════════════════════════════════════════
 //  AI NUTRITIONIST — SYSTEM PROMPT
 // ══════════════════════════════════════════════
-const NUTRITIONIST_SYSTEM = `You are an elite sports dietician working exclusively with one client: JW. You know his profile inside out.
+const NUTRITIONIST_SYSTEM = `Your name is Reggie. You are an elite sports dietician and performance coach working exclusively with one client: JW. You know his profile inside out.
+
+CRITICAL — READING TODAY'S CONTEXT:
+The data you receive contains a "todayIntention" field. This is ALWAYS the source of truth for today's nutrition targets — it overrides the programme schedule completely.
+- If todayIntention.setByUser is true: use those exact calorie/macro targets. Do not reference the weekly programme schedule.
+- If todayIntention.setByUser is false: use the fallback targets from the programme, but mention that setting today's intention on the home screen would give more accurate targets.
+Never contradict what the user has set as their intention for today.
+
+CRITICAL — MATHS:
+When calculating remaining macros, ALWAYS do this:
+remaining = target - already consumed (from the "consumed" field in context)
+State the maths explicitly when relevant: "You've had Xg protein, target is Yg, so Zg still to go."
+Never hallucinate remaining amounts — read them directly from context.remaining fields.
+If suggesting meals to hit remaining targets, ensure the suggested meals actually add up to roughly the remaining amount.
 
 PROFILE:
 - Male, mid-late 20s, 188cm, ~82kg, ~14-17% body fat
@@ -2940,8 +2953,8 @@ function renderNutritionistChat(messages) {
   if (!el) return;
   if (!messages.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--text3);font-family:var(--font-mono);line-height:1.8">
-      Tell me what you've eaten and I'll log it + give feedback.<br>
-      Or ask me anything about your nutrition, training or recovery.
+      Tell Reggie what you've eaten and he'll log it + give feedback.<br>
+      Or ask him anything about your nutrition, training or recovery.
       <br><br>
       <span style="color:var(--text2)">Example: "just had breakfast — porridge, 100g oats, 200ml milk, 30g berries, 15g peanut butter"</span>
     </div>`;
@@ -2954,7 +2967,7 @@ function renderNutritionistChat(messages) {
       </div>` : '';
     return `
       <div style="margin-bottom:14px;display:flex;flex-direction:column;align-items:${m.role==='user'?'flex-end':'flex-start'}">
-        <div style="max-width:92%;padding:10px 14px;border-radius:${m.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${m.role==='user'?'var(--accent)':'var(--surface2)'};color:${m.role==='user'?'#0a0a0a':'var(--text)'};font-size:14px;line-height:1.65;white-space:pre-wrap">${m.content}${logChips}</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:${m.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${m.role==='user'?'var(--accent)':'var(--surface2)'};color:${m.role==='user'?'#0a0a0a':'var(--text)'};font-size:14px;line-height:1.65">${m.role==='user' ? (m.content||'').replace(/</g,'&lt;') : markdownToHtml(m.content||'')}${logChips}</div>
         <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">${m.time||''}</div>
       </div>`;
   }).join('');
@@ -3101,8 +3114,21 @@ function clearNutritionistChat() {
   renderNutritionistChat([]);
 }
 
-function nutrInputKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendNutritionistMessage(); }
+function markdownToHtml(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:var(--surface);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:12px">$1</code>')
+    .replace(/^### (.+)$/gm, '<div style="font-weight:700;margin:8px 0 2px">$1</div>')
+    .replace(/^## (.+)$/gm, '<div style="font-weight:700;margin:8px 0 2px">$1</div>')
+    .replace(/^# (.+)$/gm, '<div style="font-weight:700;margin:8px 0 2px">$1</div>')
+    .replace(/^- (.+)$/gm, '<div style="display:flex;gap:6px;margin:2px 0"><span>·</span><span>$1</span></div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+  // Enter alone = linebreak (default textarea behaviour, do nothing)
+  // Shift+Enter = send
+  if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); sendNutritionistMessage(); }
 }
 
 
