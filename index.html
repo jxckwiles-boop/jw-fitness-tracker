@@ -313,6 +313,9 @@
     font-size: 13px; transition: all 0.2s;
   }
   .supp-check.checked { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+  .intention-btn { font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono);transition:all 0.15s; }
+  .intention-btn:active { background:var(--surface2); }
+  .intention-btn.active { background:var(--accent-dim);border-color:var(--accent);color:var(--accent); }
   .supp-name { font-size: 14px; font-weight: 600; flex: 1; }
   .supp-time { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
 </style>
@@ -331,7 +334,7 @@
           <div class="page-subtitle" id="dash-date">—</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <button onclick="openNutritionistModal()" style="padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-size:12px;font-family:var(--font-mono);cursor:pointer;font-weight:500">AI Coach</button>
+          <button onclick="openNutritionistModal()" style="padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-size:12px;font-family:var(--font-mono);cursor:pointer;font-weight:500">+ Log / Coach</button>
           <div style="text-align:right">
             <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">STREAK</div>
             <div style="font-size:22px;font-weight:800;color:var(--accent)" id="streak-count">0</div>
@@ -341,6 +344,27 @@
     </div>
 
     <div class="scroll-area">
+
+      <!-- Today's intention -->
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700">Today's plan</div>
+            <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:1px" id="intention-targets-label">Sets your nutrition targets</div>
+          </div>
+          <div id="intention-badge" style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text3);font-family:var(--font-mono)">Not set</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="intention-quick-btns">
+          <button onclick="setIntention('hard')"     class="intention-btn">Hard session</button>
+          <button onclick="setIntention('moderate')" class="intention-btn">Moderate</button>
+          <button onclick="setIntention('light')"    class="intention-btn">Light cardio</button>
+          <button onclick="setIntention('rest')"     class="intention-btn">Rest day</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="intention-custom-input" placeholder="or describe your day… 'travel day', 'double session'" style="flex:1;font-size:13px;padding:10px 12px">
+          <button onclick="setIntentionFromText()" style="padding:10px 14px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;font-family:var(--font-display)">Set</button>
+        </div>
+      </div>
 
       <!-- Calorie ring + macros -->
       <div class="card">
@@ -504,8 +528,13 @@
   <!-- ═══════════════════════════════════════ -->
   <div class="screen" id="screen-nutrition">
     <div class="page-header">
-      <div class="page-title">Nutrition</div>
-      <div class="page-subtitle" id="nutr-date">—</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="page-title">Nutrition</div>
+          <div class="page-subtitle" id="nutr-date">—</div>
+        </div>
+        <button onclick="openNutritionistModal()" style="padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-size:12px;font-family:var(--font-mono);cursor:pointer;font-weight:500">+ Log</button>
+      </div>
     </div>
 
     <div class="scroll-area">
@@ -1256,33 +1285,46 @@
   <!--  MODAL: AI NUTRITIONIST               -->
   <!-- ══════════════════════════════════════ -->
   <div class="modal-overlay" id="modal-nutritionist" onclick="closeModal('modal-nutritionist',event)">
-    <div class="modal" style="height:85dvh;display:flex;flex-direction:column;padding-bottom:0">
+    <div class="modal" style="height:90dvh;display:flex;flex-direction:column;padding-bottom:0">
       <div class="modal-handle"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0">
         <div>
-          <div class="modal-title" style="margin:0">AI Nutritionist</div>
-          <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:2px">Calibrated to your profile & today's data</div>
+          <div class="modal-title" style="margin:0">AI Coach</div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-top:2px">Log meals · get feedback · ask anything</div>
         </div>
         <button onclick="clearNutritionistChat()" style="font-size:11px;font-family:var(--font-mono);color:var(--text3);background:none;border:none;cursor:pointer">Clear</button>
       </div>
 
       <!-- Quick prompts -->
-      <div style="display:flex;gap:6px;overflow-x:auto;flex-shrink:0;padding-bottom:10px;-webkit-overflow-scrolling:touch">
+      <div style="display:flex;gap:6px;overflow-x:auto;flex-shrink:0;padding-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none">
         <button onclick="sendNutritionistMessage('Daily briefing please.')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Daily briefing</button>
-        <button onclick="sendNutritionistMessage('Am I on track for my protein target today?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Protein check</button>
-        <button onclick="sendNutritionistMessage('What should I eat for the rest of today?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">What to eat now</button>
-        <button onclick="sendNutritionistMessage('Review my week of nutrition — what patterns do you see?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Weekly review</button>
-        <button onclick="sendNutritionistMessage('Am I eating enough to support muscle gain right now?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Muscle gain check</button>
+        <button onclick="sendNutritionistMessage('How am I tracking against today\'s targets?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Target check</button>
+        <button onclick="sendNutritionistMessage('What should I eat for the rest of today to hit my targets?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">What to eat now</button>
+        <button onclick="sendNutritionistMessage('Weekly nutrition review — patterns and improvements?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Weekly review</button>
+        <button onclick="sendNutritionistMessage('Pre-workout meal advice for today\'s session?')" style="white-space:nowrap;font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:var(--font-mono)">Pre-workout</button>
+      </div>
+
+      <!-- Photo preview (shown when photo attached) -->
+      <div id="nutr-photo-preview-wrap" style="display:none;flex-shrink:0;margin-bottom:8px;position:relative">
+        <img id="nutr-photo-preview" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border2)">
+        <div onclick="clearNutrPhoto()" style="position:absolute;top:-6px;left:68px;background:var(--surface2);border:1px solid var(--border2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:var(--text2)">×</div>
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-left:10px;vertical-align:middle">Photo attached</span>
       </div>
 
       <!-- Chat messages -->
-      <div id="nutr-chat-messages" style="flex:1;overflow-y:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch"></div>
+      <div id="nutr-chat-messages" style="flex:1;overflow-y:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch"></div>
 
       <!-- Input row -->
-      <div style="display:flex;gap:8px;padding:12px 0 calc(16px + var(--safe-bottom));flex-shrink:0;border-top:1px solid var(--border)">
-        <input type="text" id="nutr-input" placeholder="Ask your nutritionist anything…" onkeydown="nutrInputKeydown(event)"
-          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-family:var(--font-display);font-size:14px;outline:none">
-        <button id="nutr-send-btn" onclick="sendNutritionistMessage()" style="padding:11px 16px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:700;cursor:pointer">→</button>
+      <div style="flex-shrink:0;border-top:1px solid var(--border);padding:10px 0 calc(12px + var(--safe-bottom))">
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <!-- Photo button -->
+          <button onclick="document.getElementById('nutr-photo-input').click()" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">📷</button>
+          <input type="file" id="nutr-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleNutrPhoto(this)">
+          <!-- Text input -->
+          <textarea id="nutr-input" placeholder="'just had porridge, 100g oats, 200g milk, 30g berries…' or ask anything" onkeydown="nutrInputKeydown(event)"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:var(--font-display);font-size:14px;outline:none;resize:none;height:44px;max-height:120px;line-height:1.4;overflow-y:auto"></textarea>
+          <button id="nutr-send-btn" onclick="sendNutritionistMessage()" style="padding:10px 14px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0">→</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1392,6 +1434,10 @@ function updateAll() {
     f:   dynTargets.f   || settings.f,
   };
   const nc = Math.max(0, totals.c - totals.fibre);
+
+  // Restore today's intention UI
+  const todayIntention = getTodayIntention();
+  if (todayIntention) updateIntentionUI(todayIntention);
 
   // Dashboard date
   const d = new Date();
@@ -2357,24 +2403,130 @@ function getPRs()         { return getStore('jw_prs', {}); }
 function setPRs(p)        { setStore('jw_prs', p); }
 
 // ── Dynamic targets based on JW's profile + today's session ──
+// ── Today's intention (user-set, overrides programme schedule) ──
+function getTodayIntention() {
+  return getStore('jw_intention_' + todayKey(), null);
+}
+
+function setIntention(type) {
+  const INTENTION_MAP = {
+    hard:     { cal:3250, p:160, c:330, f:90, label:'Hard session',       desc:'Max targets. Carbs are your fuel — hit all of them. This is what the programme is built around.' },
+    moderate: { cal:3050, p:160, c:270, f:90, label:'Moderate session',   desc:'Solid training targets. Prioritise pre and post-workout nutrition.' },
+    light:    { cal:2850, p:160, c:220, f:90, label:'Light cardio / recovery', desc:'Light movement day. Protein held, carbs reduced. Fuel recovery, not performance.' },
+    rest:     { cal:2600, p:160, c:160, f:90, label:'Rest day',           desc:'Lower carbs, protein held. Let the body repair. Don\'t overeat out of boredom.' },
+    travel:   { cal:2600, p:160, c:160, f:90, label:'Travel / disrupted day', desc:'Tough environment. Prioritise protein above all. Accept imperfection, minimise damage.' },
+    double:   { cal:3500, p:165, c:380, f:90, label:'Double session',     desc:'High demand day. Carbs up significantly. Eat more than feels comfortable.' },
+  };
+  const intention = INTENTION_MAP[type] || INTENTION_MAP.rest;
+  intention.type = type;
+  intention.setAt = Date.now();
+  setStore('jw_intention_' + todayKey(), intention);
+  updateIntentionUI(intention);
+  updateAll();
+  showToast('Targets updated — ' + intention.label);
+}
+
+async function setIntentionFromText() {
+  const input = document.getElementById('intention-custom-input');
+  const text = input?.value?.trim();
+  if (!text) return;
+
+  const apiKey = getStore('jw_api_key', '');
+  if (!apiKey) {
+    // Fallback: simple keyword matching
+    const t = text.toLowerCase();
+    if (t.includes('hard') || t.includes('heavy') || t.includes('gym')) setIntention('hard');
+    else if (t.includes('double')) setIntention('double');
+    else if (t.includes('travel') || t.includes('airport') || t.includes('busy')) setIntention('travel');
+    else if (t.includes('rest') || t.includes('off') || t.includes('no train')) setIntention('rest');
+    else if (t.includes('light') || t.includes('walk') || t.includes('easy') || t.includes('spin')) setIntention('light');
+    else setIntention('moderate');
+    if (input) input.value = '';
+    return;
+  }
+
+  const btn = document.querySelector('[onclick="setIntentionFromText()"]');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{ role:'user', content:
+          `User is describing their day: "${text}". 
+           Classify into one of: hard, moderate, light, rest, travel, double.
+           Also write a short label (max 4 words) and a one-sentence description of the nutrition approach for the day.
+           
+           Reply ONLY with JSON: {"type":"hard|moderate|light|rest|travel|double","label":"...","desc":"...","cal":0,"p":0,"c":0,"f":0}
+           
+           Base targets by type:
+           hard: cal 3250, p 160, c 330, f 90
+           moderate: cal 3050, p 160, c 270, f 90  
+           light: cal 2850, p 160, c 220, f 90
+           rest: cal 2600, p 160, c 160, f 90
+           travel: cal 2600, p 160, c 160, f 90
+           double: cal 3500, p 165, c 380, f 90
+           
+           You can adjust slightly from base if the description warrants it (e.g. very long travel day might have slightly lower carbs).` }]
+      })
+    });
+    const data = await res.json();
+    const json = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    json.setAt = Date.now();
+    setStore('jw_intention_' + todayKey(), json);
+    updateIntentionUI(json);
+    updateAll();
+    showToast('Targets set — ' + json.label);
+    if (input) input.value = '';
+  } catch(e) {
+    showToast('Could not parse — try a quick-set button');
+  } finally {
+    if (btn) { btn.textContent = 'Set'; btn.disabled = false; }
+  }
+}
+
+function updateIntentionUI(intention) {
+  const badge = document.getElementById('intention-badge');
+  const label = document.getElementById('intention-targets-label');
+  const btns  = document.querySelectorAll('.intention-btn');
+  if (badge) {
+    badge.textContent = intention.label;
+    badge.style.background = intention.type === 'hard' || intention.type === 'double' ? 'var(--red-dim)' :
+                             intention.type === 'moderate' ? 'var(--amber-dim)' :
+                             intention.type === 'rest' || intention.type === 'travel' ? 'var(--blue-dim)' : 'var(--accent-dim)';
+    badge.style.color = intention.type === 'hard' || intention.type === 'double' ? 'var(--red)' :
+                        intention.type === 'moderate' ? 'var(--amber)' :
+                        intention.type === 'rest' || intention.type === 'travel' ? 'var(--blue)' : 'var(--accent)';
+  }
+  if (label) label.textContent = `${intention.cal}kcal · ${intention.p}g P · ${intention.c}g C · ${intention.f}g F`;
+  btns.forEach(b => b.classList.remove('active'));
+  const typeMap = { hard:'Hard session', moderate:'Moderate', light:'Light cardio', rest:'Rest day' };
+  btns.forEach(b => { if (b.textContent === typeMap[intention.type]) b.classList.add('active'); });
+}
+
 function getDynamicTargets() {
+  // Intention always wins if set today
+  const intention = getTodayIntention();
+  if (intention) {
+    return { cal:intention.cal, p:intention.p, c:intention.c, f:intention.f,
+             label:intention.label, desc:intention.desc, sessionType:intention.type };
+  }
+  // Fallback: programme schedule
   const base = { cal:2900, p:160, c:330, f:90 };
-  const today = todayKey();
-  const todaySession = getSessionLog().find(s => s.date === today);
-  const prog = getTodaysProgramme();
-  const sessionType = todaySession?.sessionType || prog?.key || 'rest';
-
+  const prog  = getTodaysProgramme();
+  const key   = prog?.key || 'rest';
   const adj = {
-    lower_push:  { cal:0,   p:0, c:0,    f:0, label:'Heavy lower & push day',      desc:'Full training day targets: 2,900kcal · 160g P · 330g C · 90g F. Carbs are your fuel — hit them.' },
-    pull_hinge:  { cal:0,   p:0, c:0,    f:0, label:'Heavy pull & hinge day',       desc:'Full training day targets: 2,900kcal · 160g P · 330g C · 90g F. Post-session protein within 60 mins.' },
-    hypertrophy: { cal:-100,p:0, c:-50,  f:0, label:'Hypertrophy support day',      desc:'Moderate session — 2,800kcal · 160g P · 280g C · 90g F. Protein non-negotiable.' },
-    cardio:      { cal:-100,p:0, c:-30,  f:0, label:'Cardio / spin day',             desc:'2,800kcal · 160g P · 300g C · 90g F. Rehydrate well. Don\'t let protein slip.' },
-    rest:        { cal:-300,p:0, c:-130, f:0, label:'Rest day',                      desc:'2,600kcal · 160g P · 200g C · 90g F. Lower carbs, protein held. Recovery focus.' },
-    custom:      { cal:-100,p:0, c:-30,  f:0, label:'Training day',                  desc:'General training targets. Log your session type for precise targets.' }
-  }[sessionType] || { cal:-300,p:0,c:-130,f:0,label:'Rest day',desc:'' };
-
+    lower_push:  { cal:0,    p:0, c:0,    f:0, label:'Lower & push day',   desc:'Full training targets. Carbs are your fuel.' },
+    pull_hinge:  { cal:0,    p:0, c:0,    f:0, label:'Pull & hinge day',   desc:'Full training targets. Post-session protein within 60 mins.' },
+    hypertrophy: { cal:-100, p:0, c:-50,  f:0, label:'Hypertrophy day',    desc:'Moderate session targets.' },
+    cardio:      { cal:-100, p:0, c:-30,  f:0, label:'Cardio day',         desc:'Rehydrate well. Don\'t let protein slip.' },
+    rest:        { cal:-300, p:0, c:-130, f:0, label:'Rest day (scheduled)',desc:'Lower carbs, protein held.' },
+  }[key] || { cal:-300, p:0, c:-130, f:0, label:'Rest day', desc:'' };
   return { cal:base.cal+adj.cal, p:base.p+adj.p, c:base.c+adj.c, f:base.f+adj.f,
-           label:adj.label, desc:adj.desc, sessionType };
+           label:adj.label, desc:adj.desc, sessionType:key };
 }
 
 function getTodaysProgramme() {
@@ -2661,7 +2813,25 @@ KEY FLAGS TO ENFORCE:
 - Fibre under 20g = flag for gut health and satiety
 - No post-workout food within 60 min on training days = flag the missed recovery window
 
-You always ground feedback in the actual numbers. You are a performance coach, not a wellness chatbot.`;
+You always ground feedback in the actual numbers. You are a performance coach, not a wellness chatbot.
+
+MEAL LOGGING — CRITICAL:
+When JW describes food he's eaten (or attaches a photo of food/a label), you MUST:
+1. Calculate the macros for everything described
+2. Determine the meal type: breakfast (before ~11am), lunch (~11am–3pm), dinner (~5pm onwards), snack (anything else or small items). Use the time of day from context.
+3. Embed a LOG action in your response using this exact format (invisible to user, parsed by app):
+   <<<LOG:{"meal":"breakfast","name":"Porridge with berries & peanut butter","cal":520,"p":22,"c":68,"f":18,"fibre":7}>>>
+4. Then give your conversational response — feedback on the meal quality, timing, how it fits today's targets, what's still needed.
+
+Rules for logging:
+- Always include one LOG block per distinct meal described. If someone lists multiple foods in one message, combine them into a single LOG entry for that meal.
+- If a photo is attached showing a nutrition label, read the label and calculate macros for the quantity described.
+- If a photo shows a plate of food, estimate macros from what's visible plus any description given.
+- Always clarify the meal type in your response: "Logged as breakfast ✓" or "I've added this as your lunch."
+- If quantities are vague (e.g. "a bowl of pasta"), use realistic estimates and state your assumptions.
+- If context like timing is given ("just before my workout", "post-gym"), use it to give timing-specific feedback.
+- NEVER log a meal without including feedback. The log and the advice always come together.
+- Context messages like "travel day" or "can't train today" should NOT generate a LOG block — just respond with adjusted advice.`;
 
 // ── Context builder ──
 function buildNutritionContext() {
@@ -2674,6 +2844,7 @@ function buildNutritionContext() {
   const prog    = getTodaysProgramme();
   const hour    = new Date().getHours();
   const nc      = Math.max(0, totals.c-(totals.fibre||0));
+  const intention = getTodayIntention();
 
   // WHOOP data
   const whoop = getStore('jw_whoop_data', null);
@@ -2786,7 +2957,11 @@ function buildNutritionContext() {
       : weights.length===1 ? `${weights[0].weight}kg (single reading)` : 'No weight logged',
     whoop:          whoopContext,
     training:       trainingLoad,
-    weeklyNutritionAverage: weekAvg
+    weeklyNutritionAverage: weekAvg,
+    todayIntention: intention
+      ? { type: intention.type, label: intention.label, setByUser: true }
+      : { type: prog?.key || 'rest', label: prog?.name || 'Rest day (from programme schedule)', setByUser: false },
+    scheduledProgramme: prog?.name || 'Rest day'
   };
 }
 
@@ -2805,61 +2980,178 @@ function renderNutritionistChat(messages) {
   const el = document.getElementById('nutr-chat-messages');
   if (!el) return;
   if (!messages.length) {
-    el.innerHTML='<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--text3);font-family:var(--font-mono);line-height:1.7">Your AI nutritionist has your full profile loaded.<br>Ask anything, or wait for your daily briefing.</div>';
+    el.innerHTML = `<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--text3);font-family:var(--font-mono);line-height:1.8">
+      Tell me what you've eaten and I'll log it + give feedback.<br>
+      Or ask me anything about your nutrition, training or recovery.
+      <br><br>
+      <span style="color:var(--text2)">Example: "just had breakfast — porridge, 100g oats, 200ml milk, 30g berries, 15g peanut butter"</span>
+    </div>`;
     return;
   }
-  el.innerHTML=messages.map(m=>`
-    <div style="margin-bottom:14px;display:flex;flex-direction:column;align-items:${m.role==='user'?'flex-end':'flex-start'}">
-      <div style="max-width:90%;padding:10px 14px;border-radius:${m.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${m.role==='user'?'var(--accent)':'var(--surface2)'};color:${m.role==='user'?'#0a0a0a':'var(--text)'};font-size:14px;line-height:1.65;white-space:pre-wrap">${m.content}</div>
-      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">${m.time||''}</div>
-    </div>`).join('');
-  el.scrollTop=el.scrollHeight;
+  el.innerHTML = messages.map(m => {
+    const logChips = m.logsAdded?.length ? `
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+        ${m.logsAdded.map(l => `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent);font-family:var(--font-mono)">✓ ${l.name} · ${Math.round(l.cal)}kcal logged</span>`).join('')}
+      </div>` : '';
+    return `
+      <div style="margin-bottom:14px;display:flex;flex-direction:column;align-items:${m.role==='user'?'flex-end':'flex-start'}">
+        <div style="max-width:92%;padding:10px 14px;border-radius:${m.role==='user'?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${m.role==='user'?'var(--accent)':'var(--surface2)'};color:${m.role==='user'?'#0a0a0a':'var(--text)'};font-size:14px;line-height:1.65;white-space:pre-wrap">${m.content}${logChips}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">${m.time||''}</div>
+      </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Nutritionist photo handling ──
+let nutrPhotoBase64 = null;
+
+function handleNutrPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    nutrPhotoBase64 = e.target.result.split(',')[1];
+    document.getElementById('nutr-photo-preview').src = e.target.result;
+    document.getElementById('nutr-photo-preview-wrap').style.display = 'flex';
+    document.getElementById('nutr-photo-preview-wrap').style.alignItems = 'center';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearNutrPhoto() {
+  nutrPhotoBase64 = null;
+  document.getElementById('nutr-photo-input').value = '';
+  document.getElementById('nutr-photo-preview-wrap').style.display = 'none';
 }
 
 async function sendNutritionistMessage(message, isAuto) {
   const input = document.getElementById('nutr-input');
-  const msg   = message||(input?.value?.trim());
-  if (!msg) return;
-  if (input&&!isAuto) input.value='';
-  const apiKey=getStore('jw_api_key','');
-  if (!apiKey){showToast('Add API key in Settings first');return;}
-  const chat=getStore('jw_nutr_chat',[]);
-  const time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  if (!isAuto){chat.push({role:'user',content:msg,time});setStore('jw_nutr_chat',chat);renderNutritionistChat(chat);}
-  const el=document.getElementById('nutr-chat-messages');
-  const thinking=document.createElement('div');
-  thinking.style.cssText='padding:10px 14px;background:var(--surface2);border-radius:14px;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--text3);margin-bottom:14px';
-  thinking.innerHTML='<span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite"></span>thinking…';
-  el?.appendChild(thinking); if(el)el.scrollTop=el.scrollHeight;
-  const btn=document.getElementById('nutr-send-btn');
-  if(btn){btn.disabled=true;btn.textContent='…';}
+  const msg   = message || (input?.value?.trim());
+  if (!msg && !nutrPhotoBase64) return;
+  if (input && !isAuto) input.value = '';
+
+  const apiKey = getStore('jw_api_key', '');
+  if (!apiKey) { showToast('Add API key in Settings first'); return; }
+
+  const chat = getStore('jw_nutr_chat', []);
+  const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const hasPhoto = !!nutrPhotoBase64;
+  const photoSnapshot = nutrPhotoBase64; // capture before clearing
+
+  if (!isAuto) {
+    const userMsg = { role:'user', time,
+      content: msg || (hasPhoto ? '[Photo attached]' : ''),
+      hasPhoto };
+    chat.push(userMsg);
+    setStore('jw_nutr_chat', chat);
+    renderNutritionistChat(chat);
+  }
+
+  if (hasPhoto) clearNutrPhoto();
+
+  // Show thinking indicator
+  const el = document.getElementById('nutr-chat-messages');
+  const thinking = document.createElement('div');
+  thinking.style.cssText = 'padding:10px 14px;background:var(--surface2);border-radius:14px;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--text3);margin-bottom:14px';
+  thinking.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite"></span>thinking…';
+  el?.appendChild(thinking);
+  if (el) el.scrollTop = el.scrollHeight;
+
+  const btn = document.getElementById('nutr-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
   try {
-    const context=buildNutritionContext();
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:NUTRITIONIST_SYSTEM,
-        messages:[{role:'user',content:`CURRENT DATA:\n${JSON.stringify(context,null,2)}\n\nJW says: ${msg}`}]})
+    const context = buildNutritionContext();
+
+    // Build message content
+    const userContent = [];
+    if (photoSnapshot) {
+      userContent.push({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data: photoSnapshot } });
+    }
+    userContent.push({ type:'text', text:
+      `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo)'}` });
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: NUTRITIONIST_SYSTEM,
+        messages: [{ role:'user', content: userContent }]
+      })
     });
-    const data=await res.json();
-    const reply=data.content?.[0]?.text;
+
+    const data = await res.json();
+    const rawReply = data.content?.[0]?.text || '';
     thinking.remove();
-    if(reply){
-      chat.push({role:'assistant',content:reply,time});
-      setStore('jw_nutr_chat',chat);
-      if(isAuto) setStore('jw_last_briefing',todayKey());
+
+    // Parse any meal log actions from the response
+    const { cleanReply, logsAdded } = parseMealLogs(rawReply, time);
+
+    if (logsAdded.length > 0) {
+      logsAdded.forEach(meal => addFoodToLog(meal));
+      updateAll();
+    }
+
+    if (cleanReply) {
+      const assistantMsg = { role:'assistant', content:cleanReply, time,
+        logsAdded: logsAdded.length > 0 ? logsAdded : undefined };
+      chat.push(assistantMsg);
+      setStore('jw_nutr_chat', chat);
+      if (isAuto) setStore('jw_last_briefing', todayKey());
       renderNutritionistChat(chat);
     }
-  } catch(e){thinking.remove();showToast('Nutritionist offline — check API key');}
-  finally{if(btn){btn.disabled=false;btn.textContent='→';}}
+
+  } catch(e) {
+    thinking.remove();
+    showToast('Coach offline — check API key');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '→'; }
+  }
 }
 
-function clearNutritionistChat(){
-  setStore('jw_nutr_chat',[]);setStore('jw_last_briefing','');
+function parseMealLogs(text, time) {
+  // Look for JSON meal log blocks that the coach embeds in its response
+  // Format: <<<LOG:{"meal":"breakfast","name":"...","cal":0,"p":0,"c":0,"f":0,"fibre":0}>>>
+  const logPattern = /<<<LOG:(.*?)>>>/gs;
+  const logsAdded = [];
+  let cleanReply = text;
+
+  let match;
+  while ((match = logPattern.exec(text)) !== null) {
+    try {
+      const entry = JSON.parse(match[1]);
+      if (entry.name && entry.cal !== undefined) {
+        logsAdded.push({
+          name:   entry.name,
+          meal:   entry.meal || 'snack',
+          cal:    entry.cal  || 0,
+          p:      entry.p    || 0,
+          c:      entry.c    || 0,
+          f:      entry.f    || 0,
+          fibre:  entry.fibre || 0,
+          logged_via: 'coach'
+        });
+      }
+    } catch(e) {}
+  }
+
+  // Remove the log blocks from the displayed reply
+  cleanReply = text.replace(/<<<LOG:.*?>>>/gs, '').trim();
+  return { cleanReply, logsAdded };
+}
+
+function clearNutritionistChat() {
+  setStore('jw_nutr_chat', []);
+  setStore('jw_last_briefing', '');
   renderNutritionistChat([]);
 }
 
-function nutrInputKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendNutritionistMessage();}}
+function nutrInputKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendNutritionistMessage(); }
+}
+
 
 // ══════════════════════════════════════════════
 //  HEVY API INTEGRATION
