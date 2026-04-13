@@ -2810,6 +2810,7 @@ KEY FLAGS TO ENFORCE:
 - Weight flat for 3+ weeks = suggest 200 kcal increase
 - Fibre under 20g = flag for gut health
 - No post-workout food within 60 min on training days = flag the missed recovery window
+- If supplements context shows items not yet taken that should be taken by now (based on timing) = mention them once, not repeatedly
 
 You always ground feedback in the actual numbers. You are a performance coach, not a wellness chatbot.
 
@@ -2829,7 +2830,17 @@ Rules for logging:
 - If quantities are vague (e.g. "a bowl of pasta"), use realistic estimates and state your assumptions.
 - If context like timing is given ("just before my workout", "post-gym"), use it to give timing-specific feedback.
 - NEVER log a meal without including feedback. The log and the advice always come together.
-- Context messages like "travel day" or "can't train today" should NOT generate a LOG block — just respond with adjusted advice.`;
+- Context messages like "travel day" or "can't train today" should NOT generate a LOG block — just respond with adjusted advice.
+
+SUPPLEMENT LOGGING:
+You receive the full supplement list with today's completion status in context.supplements.
+When JW mentions taking supplements conversationally ("morning supps done", "took my creatine", "had my vitamins"), identify which supplements from his list he's referring to and embed a SUPP block:
+<<<SUPP:{"ids":["supp_id_1","supp_id_2"]}>>>
+Use the exact supplement IDs from the context.supplements list (match by name).
+If he says "all supplements" or "morning supps done" — log all supplements with timing "Morning".
+Always confirm what you've logged: "Morning supplements marked as done ✓"
+If he mentions a supplement not in his list, note it but don't log it — suggest he adds it in Routines.
+When logging a food that contains a supplement ingredient (e.g. "protein shake with 5g creatine"), the app auto-detects and logs it — you don't need to add a SUPP block for this case, but you can confirm it was picked up.`;
 
 // ── Context builder ──
 function buildNutritionContext() {
@@ -2959,7 +2970,15 @@ function buildNutritionContext() {
     todayIntention: intention
       ? { type: intention.type, label: intention.label, setByUser: true }
       : { type: prog?.key || 'rest', label: prog?.name || 'Rest day (from programme schedule)', setByUser: false },
-    scheduledProgramme: prog?.name || 'Rest day'
+    scheduledProgramme: prog?.name || 'Rest day',
+    supplements: (() => {
+      const supps = getSupplements();
+      const suppLog = getSuppLog(today);
+      return supps.map(s => ({
+        name: s.name, dose: s.dose, timing: s.time,
+        takenToday: !!suppLog[s.id]
+      }));
+    })()
   };
 }
 
@@ -3044,6 +3063,9 @@ async function sendNutritionistMessage(message, isAuto) {
 
   if (hasPhoto) clearNutrPhoto();
 
+  // Auto-detect supplement mentions in the user's message immediately
+  if (msg) autoDetectSupplements(msg);
+
   // Show thinking indicator
   const el = document.getElementById('nutr-chat-messages');
   const thinking = document.createElement('div');
@@ -3104,8 +3126,7 @@ async function sendNutritionistMessage(message, isAuto) {
 }
 
 function parseMealLogs(text, time) {
-  // Look for JSON meal log blocks that the coach embeds in its response
-  // Format: <<<LOG:{"meal":"breakfast","name":"...","cal":0,"p":0,"c":0,"f":0,"fibre":0}>>>
+  // Parse meal log blocks: <<<LOG:{...}>>>
   const logPattern = /<<<LOG:(.*?)>>>/gs;
   const logsAdded = [];
   let cleanReply = text;
@@ -3116,22 +3137,69 @@ function parseMealLogs(text, time) {
       const entry = JSON.parse(match[1]);
       if (entry.name && entry.cal !== undefined) {
         logsAdded.push({
-          name:   entry.name,
-          meal:   entry.meal || 'snack',
-          cal:    entry.cal  || 0,
-          p:      entry.p    || 0,
-          c:      entry.c    || 0,
-          f:      entry.f    || 0,
-          fibre:  entry.fibre || 0,
-          logged_via: 'coach'
+          name: entry.name, meal: entry.meal || 'snack',
+          cal: entry.cal||0, p: entry.p||0, c: entry.c||0,
+          f: entry.f||0, fibre: entry.fibre||0, logged_via: 'coach'
         });
       }
     } catch(e) {}
   }
 
-  // Remove the log blocks from the displayed reply
-  cleanReply = text.replace(/<<<LOG:.*?>>>/gs, '').trim();
-  return { cleanReply, logsAdded };
+  // Parse supplement log blocks: <<<SUPP:{"ids":["id1","id2"]}>>>
+  const suppPattern = /<<<SUPP:(.*?)>>>/gs;
+  const suppsLogged = [];
+  while ((match = suppPattern.exec(text)) !== null) {
+    try {
+      const entry = JSON.parse(match[1]);
+      if (entry.ids && Array.isArray(entry.ids)) {
+        suppsLogged.push(...entry.ids);
+      }
+    } catch(e) {}
+  }
+
+  // If supplements were mentioned in coach block, mark them
+  if (suppsLogged.length > 0) {
+    const today = todayKey();
+    const suppLog = getSuppLog(today);
+    suppsLogged.forEach(id => { suppLog[id] = true; });
+    setSuppLog(today, suppLog);
+  }
+
+  // Auto-detect supplement mentions from food log entries
+  // Cross-reference against defined supplements by name keywords
+  if (logsAdded.length > 0) {
+    autoDetectSupplements(logsAdded.map(l => l.name).join(' '));
+  }
+
+  cleanReply = text.replace(/<<<LOG:.*?>>>/gs, '').replace(/<<<SUPP:.*?>>>/gs, '').trim();
+  return { cleanReply, logsAdded, suppsLogged };
+}
+
+function autoDetectSupplements(text) {
+  const supps = getSupplements();
+  if (!supps.length) return;
+  const today = todayKey();
+  const suppLog = getSuppLog(today);
+  const lowerText = text.toLowerCase();
+  let anyMatched = false;
+
+  supps.forEach(s => {
+    if (suppLog[s.id]) return; // already logged
+    // Match on supplement name keywords
+    const keywords = s.name.toLowerCase()
+      .replace(/[()]/g, '').split(/[\s,/]+/)
+      .filter(w => w.length > 3); // ignore short words
+    const matched = keywords.some(kw => lowerText.includes(kw));
+    if (matched) {
+      suppLog[s.id] = true;
+      anyMatched = true;
+    }
+  });
+
+  if (anyMatched) {
+    setSuppLog(today, suppLog);
+    updateAll(); // refresh supplement display
+  }
 }
 
 function clearNutritionistChat() {
