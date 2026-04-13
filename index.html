@@ -715,26 +715,6 @@
         </div>
       </div>
 
-      <!-- Daily targets -->
-      <div class="section-title" style="margin:20px 0 10px">DAILY TARGETS</div>
-      <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px;line-height:1.6">These are your base targets. The app adjusts them automatically based on your training day.</div>
-      <div class="settings-row">
-        <div><div class="settings-label">Calories</div><div class="settings-sub">kcal base (training days)</div></div>
-        <input class="settings-input" type="number" id="set-cal" placeholder="2900" onchange="saveSettings()">
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Protein</div><div class="settings-sub">grams per day</div></div>
-        <input class="settings-input" type="number" id="set-p" placeholder="160" onchange="saveSettings()">
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Carbs</div><div class="settings-sub">grams (training days)</div></div>
-        <input class="settings-input" type="number" id="set-c" placeholder="330" onchange="saveSettings()">
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Fat</div><div class="settings-sub">grams per day</div></div>
-        <input class="settings-input" type="number" id="set-f" placeholder="90" onchange="saveSettings()">
-      </div>
-
       <div class="section-title" style="margin:20px 0 10px">WEEKLY AVERAGES</div>
       <div class="card" id="weekly-avg-card">
         <div style="font-size:13px;color:var(--text2);font-family:var(--font-mono)">Loading…</div>
@@ -1351,12 +1331,7 @@ function getSettings() {
   return getStore('jw_settings', { cal:0, p:0, c:0, f:0, water:8 });
 }
 function saveSettings() {
-  const s = {
-    cal: +document.getElementById('set-cal').value || 0,
-    p:   +document.getElementById('set-p').value || 0,
-    c:   +document.getElementById('set-c').value || 0,
-    f:   +document.getElementById('set-f').value || 0,
-  };
+  const s = getSettings();
   setStore('jw_settings', s);
   updateAll();
   showToast('Settings saved');
@@ -2306,10 +2281,6 @@ function addSupplement() {
 // ══════════════════════════════════════════════
 function renderSettings() {
   const s = getSettings();
-  document.getElementById('set-cal').value = s.cal || '';
-  document.getElementById('set-p').value   = s.p   || '';
-  document.getElementById('set-c').value   = s.c   || '';
-  document.getElementById('set-f').value   = s.f   || '';
   updateIntegrationStatus();
 
   // Weekly averages
@@ -3076,13 +3047,14 @@ async function sendNutritionistMessage(message, isAuto) {
       headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
+        max_tokens: 1024,
         system: NUTRITIONIST_SYSTEM,
         messages: [{ role:'user', content: userContent }]
       })
     });
 
     const data = await res.json();
+    console.log('Coach API response:', res.status, data);
     const rawReply = data.content?.[0]?.text || '';
     thinking.remove();
 
@@ -3105,7 +3077,8 @@ async function sendNutritionistMessage(message, isAuto) {
 
   } catch(e) {
     thinking.remove();
-    showToast('Coach offline — check API key');
+    console.error('Coach error:', e);
+    showToast('Coach error: ' + (e.message||'unknown').slice(0,40));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '→'; }
   }
