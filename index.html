@@ -1320,6 +1320,20 @@
 // ══════════════════════════════════════════════
 //  STATE & STORAGE
 // ══════════════════════════════════════════════
+
+// Claude API proxy — routes through /api/claude to avoid CORS
+async function claudeAPI(payload) {
+  const apiKey = getStore('jw_api_key', '');
+  if (!apiKey) throw new Error('No API key');
+  const res = await fetch('/api/claude', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ ...payload, apiKey }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
+  return data;
+}
 const todayKey = () => new Date().toISOString().slice(0,10);
 
 function getStore(key, def) {
@@ -1722,40 +1736,25 @@ async function analysePhotoLabel() {
   <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/jpeg', data: photoBase64 }
-            },
-            {
-              type: 'text',
-              text: `This is a nutrition label. The user ate ${serving}g of this product.
+    const data = await claudeAPI({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: photoBase64 } },
+          { type: 'text', text: `This is a nutrition label. The user ate ${serving}g of this product.
 
 Extract the per-100g values from the label, then calculate the actual amounts for ${serving}g.
 
 Reply with ONLY valid JSON — no explanation, no markdown:
 {"name":"product name or best guess","per100":{"cal":0,"p":0,"c":0,"f":0,"fibre":0},"actual":{"cal":0,"p":0,"c":0,"f":0,"fibre":0},"serving":${serving},"notes":"any relevant notes e.g. net carbs, high protein etc"}
 
-If you cannot read the label clearly, return {"error":"reason"}.`
-            }
-          ]
-        }]
-      })
+If you cannot read the label clearly, return {"error":"reason"}.` }
+        ]
+      }]
     });
 
-    const data = await res.json();
     const text = data.content[0].text.trim().replace(/```json|```/g, '').trim();
     const json = JSON.parse(text);
 
@@ -1873,13 +1872,7 @@ Be realistic about portions. If confidence is low, say so in notes.`;
         ]
       : [{ type:'text', text: prompt }];
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role:'user', content }] })
-    });
-
-    const data = await res.json();
+    const data = await claudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role:'user', content }] });
     const text = data.content[0].text.trim().replace(/```json|```/g,'').trim();
     const json = JSON.parse(text);
 
@@ -2420,13 +2413,10 @@ async function setIntentionFromText() {
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        messages: [{ role:'user', content:
+    const data = await claudeAPI({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      messages: [{ role:'user', content:
           `User is describing their day: "${text}". 
            Classify into one of: hard, moderate, light, rest, travel, double.
            Also write a short label (max 4 words) and a one-sentence description of the nutrition approach for the day.
@@ -2442,9 +2432,7 @@ async function setIntentionFromText() {
            double: cal 3500, p 165, c 380, f 90
            
            You can adjust slightly from base if the description warrants it (e.g. very long travel day might have slightly lower carbs).` }]
-      })
     });
-    const data = await res.json();
     const json = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
     json.setAt = Date.now();
     setStore('jw_intention_' + todayKey(), json);
@@ -3001,9 +2989,6 @@ async function sendNutritionistMessage(message, isAuto) {
   if (!msg && !nutrPhotoBase64) return;
   if (input && !isAuto) input.value = '';
 
-  const apiKey = getStore('jw_api_key', '');
-  if (!apiKey) { showToast('Add API key in Settings first'); return; }
-
   const chat = getStore('jw_nutr_chat', []);
   const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
   const hasPhoto = !!nutrPhotoBase64;
@@ -3042,19 +3027,14 @@ async function sendNutritionistMessage(message, isAuto) {
     userContent.push({ type:'text', text:
       `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo)'}` });
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: NUTRITIONIST_SYSTEM,
-        messages: [{ role:'user', content: userContent }]
-      })
+    const data = await claudeAPI({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: NUTRITIONIST_SYSTEM,
+      messages: [{ role:'user', content: userContent }]
     });
 
-    const data = await res.json();
-    console.log('Coach API response:', res.status, data);
+    console.log('Coach API response:', data);
     const rawReply = data.content?.[0]?.text || '';
     thinking.remove();
 
