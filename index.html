@@ -3048,14 +3048,25 @@ function renderNutritionistChat(messages) {
 
 // ── Nutritionist photo handling ──
 let nutrPhotoBase64 = null;
+let nutrPhotoMediaType = 'image/jpeg';
 
 function handleNutrPhoto(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    nutrPhotoBase64 = e.target.result.split(',')[1];
-    document.getElementById('nutr-photo-preview').src = e.target.result;
+    const dataUrl = e.target.result;
+    // Extract media type and base64 data from data URL
+    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) { showToast('Could not read image'); return; }
+    nutrPhotoMediaType = matches[1]; // e.g. image/jpeg, image/png, image/heic
+    nutrPhotoBase64 = matches[2];
+    // Normalise HEIC to jpeg for API compatibility
+    if (nutrPhotoMediaType === 'image/heic' || nutrPhotoMediaType === 'image/heif') {
+      nutrPhotoMediaType = 'image/jpeg';
+    }
+    console.log('Photo selected:', nutrPhotoMediaType, nutrPhotoBase64.length, 'chars');
+    document.getElementById('nutr-photo-preview').src = dataUrl;
     document.getElementById('nutr-photo-preview-wrap').style.display = 'flex';
     document.getElementById('nutr-photo-preview-wrap').style.alignItems = 'center';
   };
@@ -3064,6 +3075,7 @@ function handleNutrPhoto(input) {
 
 function clearNutrPhoto() {
   nutrPhotoBase64 = null;
+  nutrPhotoMediaType = 'image/jpeg';
   document.getElementById('nutr-photo-input').value = '';
   document.getElementById('nutr-photo-preview-wrap').style.display = 'none';
 }
@@ -3077,7 +3089,8 @@ async function sendNutritionistMessage(message, isAuto) {
   const chat = getStore('jw_nutr_chat', []);
   const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
   const hasPhoto = !!nutrPhotoBase64;
-  const photoSnapshot = nutrPhotoBase64; // capture before clearing
+  const photoSnapshot = nutrPhotoBase64;
+  const photoMediaType = nutrPhotoMediaType || 'image/jpeg';
 
   if (!isAuto) {
     const userMsg = { role:'user', time,
@@ -3116,12 +3129,12 @@ async function sendNutritionistMessage(message, isAuto) {
     // Build message content
     const userContent = [];
     if (photoSnapshot) {
-      userContent.push({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data: photoSnapshot } });
+      userContent.push({ type:'image', source:{ type:'base64', media_type: photoMediaType, data: photoSnapshot } });
     }
     userContent.push({ type:'text', text:
       `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo)'}` });
 
-    console.log('Calling claudeAPI, context size:', JSON.stringify(context).length, 'chars');
+    console.log('Calling claudeAPI, context size:', JSON.stringify(context).length, 'chars, photo:', photoSnapshot ? photoMediaType + ' ' + photoSnapshot.length + 'chars' : 'none');
     const data = await claudeAPI({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
