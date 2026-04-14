@@ -425,10 +425,12 @@
           </div>
         </div>
         <div class="progress-bar" style="height:6px;margin-bottom:12px"><div class="progress-fill" id="water-prog" style="background:var(--blue);width:0%"></div></div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:13px" onclick="addWaterML(250)">+250ml</button>
-          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:13px" onclick="addWaterML(500)">+500ml</button>
-          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:13px" onclick="addWaterML(750)">+750ml</button>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="addWaterML(100)">+100ml</button>
+          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="addWaterML(250)">+250ml</button>
+          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="addWaterML(500)">+500ml</button>
+          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="addWaterML(750)">+750ml</button>
+          <button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px;color:var(--red)" onclick="removeWaterML()" title="Remove last addition">−</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">Today's activity</div>
@@ -547,9 +549,8 @@
           <div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">FAT</div><div style="font-size:16px;font-weight:800;color:var(--amber)" id="n-f">0g</div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)" id="n-f-t">/ —</div></div>
         </div>
         <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Fibre:</span>
+          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Fibre today:</span>
           <span class="netcarb-badge" id="n-nc">0g</span>
-          <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-left:4px">/ 30g target</span>
         </div>
       </div>
 
@@ -797,12 +798,12 @@
             <div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:4px" id="week-sessions">0</div>
           </div>
           <div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">TOTAL VOL</div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">LIFT VOL</div>
             <div style="font-size:24px;font-weight:800;margin-top:4px" id="week-volume">0kg</div>
           </div>
           <div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">AVG RPE</div>
-            <div style="font-size:24px;font-weight:800;color:var(--amber);margin-top:4px" id="week-rpe">—</div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">CARDIO</div>
+            <div style="font-size:24px;font-weight:800;color:var(--blue);margin-top:4px" id="week-rpe">0</div>
           </div>
         </div>
       </div>
@@ -1300,7 +1301,7 @@
         <div style="display:flex;gap:8px;align-items:flex-end">
           <!-- Photo button -->
           <button onclick="document.getElementById('nutr-photo-input').click()" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">📷</button>
-          <input type="file" id="nutr-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleNutrPhoto(this)">
+          <input type="file" id="nutr-photo-input" accept="image/*" style="display:none" onchange="handleNutrPhoto(this)">
           <!-- Text input -->
           <textarea id="nutr-input" placeholder="'just had porridge, 100g oats, 200g milk, 30g berries…' or ask anything" onkeydown="nutrInputKeydown(event)"
             style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:var(--font-display);font-size:14px;outline:none;resize:none;height:44px;max-height:120px;line-height:1.4;overflow-y:auto"></textarea>
@@ -1447,7 +1448,7 @@ function updateAll() {
   document.getElementById('dash-c').textContent = Math.round(totals.c) + 'g';
   document.getElementById('dash-f').textContent = Math.round(totals.f) + 'g';
   document.getElementById('dash-nc').textContent = Math.round(totals.fibre||0) + 'g';
-  document.getElementById('dash-cal-target').textContent = '/ 30g target';
+  document.getElementById('dash-cal-target').textContent = 'fibre';
   document.getElementById('dash-p-target').textContent = effectiveTargets.p ? '/ ' + effectiveTargets.p + 'g' : '/ —';
   document.getElementById('dash-c-target').textContent = effectiveTargets.c ? '/ ' + effectiveTargets.c + 'g' : '/ —';
   document.getElementById('dash-f-target').textContent = effectiveTargets.f ? '/ ' + effectiveTargets.f + 'g' : '/ —';
@@ -1934,11 +1935,24 @@ function addWaterML(ml) {
   const today = todayKey();
   const current = getWaterML(today);
   const goal = getWaterGoalML(today);
-  const newVal = Math.min(current + ml, goal * 1.5); // allow slight over
+  const newVal = Math.min(current + ml, goal * 1.5);
   setWaterML(today, newVal);
+  // Track last addition for undo
+  setStore('jw_water_last_add', ml);
   updateAll();
   const litres = (newVal / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
   showToast('+' + ml + 'ml — ' + litres + 'L total');
+}
+
+function removeWaterML() {
+  const today = todayKey();
+  const current = getWaterML(today);
+  const lastAdd = getStore('jw_water_last_add', 250);
+  const newVal = Math.max(0, current - lastAdd);
+  setWaterML(today, newVal);
+  setStore('jw_water_last_add', 0);
+  updateAll();
+  showToast('Removed ' + lastAdd + 'ml');
 }
 
 function saveActivityLevel() {
@@ -2586,14 +2600,21 @@ function renderMuscleHeatmap() {
 
 function renderWeekStats() {
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
-  const sessions = getSessionLog().filter(s=>new Date(s.date+'T12:00:00')>=weekAgo);
-  const rpes = sessions.map(s=>s.rpe).filter(Boolean);
-  const avgRPE = rpes.length?(rpes.reduce((a,b)=>a+b,0)/rpes.length).toFixed(1):'—';
-  const vol = sessions.reduce((a,s)=>a+(s.totalVolume||0),0);
+  const hevySessions  = getStore('jw_hevy_sessions', []).filter(s=>new Date(s.date+'T12:00:00')>=weekAgo);
+  const whoopWorkouts = (getStore('jw_whoop_data',{}).recentWorkouts||[])
+    .filter(w => new Date(w.date+'T12:00:00') >= weekAgo && w.isCardio !== false);
+  const localSessions = getSessionLog().filter(s=>new Date(s.date+'T12:00:00')>=weekAgo);
+
+  const liftSessions  = hevySessions.length || localSessions.filter(s=>s.type==='weights').length;
+  const cardioCount   = whoopWorkouts.length || localSessions.filter(s=>s.type==='cardio').length;
+  const totalSessions = liftSessions + cardioCount;
+  const vol = hevySessions.reduce((a,s)=>a+(s.totalVolume||0),0) ||
+              localSessions.reduce((a,s)=>a+(s.totalVolume||0),0);
+
   const s=document.getElementById('week-sessions'), v=document.getElementById('week-volume'), r=document.getElementById('week-rpe');
-  if(s) s.textContent=sessions.length;
+  if(s) s.textContent=totalSessions;
   if(v) v.textContent=vol>0?(vol/1000).toFixed(1)+'t':'—';
-  if(r) r.textContent=avgRPE;
+  if(r) r.textContent=cardioCount;
 }
 
 function renderTodaysSessions() {
@@ -2875,7 +2896,10 @@ function buildNutritionContext() {
       restingHR:        whoop.restingHR ? whoop.restingHR + 'bpm' : 'not available',
       strain:           whoop.strain ?? 'not available',
       sleepPerformance: whoop.sleepPerf ? whoop.sleepPerf + '%' : (whoop.sleepHours ? whoop.sleepHours + 'h' : 'not available'),
-      lastSynced:       syncAge
+      lastSynced:       syncAge,
+      recentCardioSessions: (whoop.recentWorkouts || []).map(w =>
+        `${w.date}: ${w.sport}${w.duration ? ' · ' + w.duration + 'min' : ''}${w.strain ? ' · strain ' + w.strain : ''}${w.avgHR ? ' · avg HR ' + w.avgHR + 'bpm' : ''}${w.calories ? ' · ~' + w.calories + 'kcal' : ''}`
+      )
     };
   }
 
@@ -3498,6 +3522,58 @@ async function syncWhoop() {
       d.sleepPerf = s.score?.sleep_performance_percentage ?? null;
       const ms = s.score?.stage_summary?.total_in_bed_time_milli || 0;
       d.sleepHours = ms ? Math.round((ms / 3600000) * 10) / 10 : null;
+    }
+
+    // Step 4: Get recent workouts (last 7 days) for cardio session auto-import
+    if (statusEl) statusEl.textContent='Fetching activities…';
+    const workoutData = await whoopFetch('/activity/workout?limit=20').catch(()=>null);
+    if (workoutData?.records?.length) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+      // Sports that Hevy already covers — skip these to avoid double-counting
+      const STRENGTH_SPORTS = [
+        'weightlifting','weight lifting','strength training','strength',
+        'powerlifting','functional fitness','crossfit','resistance training',
+        'weight training','gym','bodybuilding'
+      ];
+      const isStrengthSport = (sport) =>
+        STRENGTH_SPORTS.some(s => (sport||'').toLowerCase().includes(s));
+
+      d.recentWorkouts = workoutData.records
+        .filter(w => w.start && w.start > sevenDaysAgo)
+        .map(w => ({
+          date:     (w.start||'').slice(0,10),
+          sport:    w.sport_name || w.sport || 'Workout',
+          isCardio: !isStrengthSport(w.sport_name || w.sport || ''),
+          duration: w.score?.duration_milli
+            ? Math.round(w.score.duration_milli / 60000) : null,
+          strain:   w.score?.strain ? parseFloat(w.score.strain.toFixed(1)) : null,
+          avgHR:    w.score?.average_heart_rate ? Math.round(w.score.average_heart_rate) : null,
+          maxHR:    w.score?.max_heart_rate ? Math.round(w.score.max_heart_rate) : null,
+          calories: w.score?.kilojoule
+            ? Math.round(w.score.kilojoule / 4.184) : null,
+        }));
+
+      // Only auto-import cardio sessions — strength sessions come from Hevy
+      const today = todayKey();
+      const cardioToday = d.recentWorkouts.filter(w => w.date === today && w.isCardio);
+      if (cardioToday.length) {
+        const sessions = getSessionLog();
+        cardioToday.forEach(w => {
+          const alreadyLogged = sessions.find(s =>
+            s.date === today && s.source === 'whoop' && s.title === w.sport);
+          if (!alreadyLogged) {
+            sessions.push({
+              id: 'whoop_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+              date: today, source: 'whoop', type: 'cardio',
+              title: w.sport, duration: w.duration,
+              strain: w.strain, avgHR: w.avgHR,
+              calories: w.calories, sessionType: 'cardio'
+            });
+          }
+        });
+        setSessionLog(sessions);
+      }
     }
 
     setStore('jw_whoop_data', d);
