@@ -385,28 +385,28 @@
             </div>
           </div>
           <div class="ring-stats">
-            <div class="macro-pill">
+            <div class="macro-pill" onclick="showMacroBreakdown('p')" style="cursor:pointer">
               <div class="macro-pill-label">Protein</div>
               <div class="macro-pill-val col-p" id="dash-p">0g</div>
               <div class="macro-pill-sub" id="dash-p-target">/ —g</div>
               <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="prog-p" style="background:var(--accent);width:0%"></div></div>
             </div>
-            <div class="macro-pill">
+            <div class="macro-pill" onclick="showMacroBreakdown('c')" style="cursor:pointer">
               <div class="macro-pill-label">Carbs</div>
               <div class="macro-pill-val col-c" id="dash-c">0g</div>
               <div class="macro-pill-sub" id="dash-c-target">/ —g</div>
               <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="prog-c" style="background:var(--blue);width:0%"></div></div>
             </div>
-            <div class="macro-pill">
+            <div class="macro-pill" onclick="showMacroBreakdown('f')" style="cursor:pointer">
               <div class="macro-pill-label">Fat</div>
               <div class="macro-pill-val col-f" id="dash-f">0g</div>
               <div class="macro-pill-sub" id="dash-f-target">/ —g</div>
               <div class="progress-bar" style="margin-top:6px"><div class="progress-fill" id="prog-f" style="background:var(--amber);width:0%"></div></div>
             </div>
-            <div class="macro-pill">
+            <div class="macro-pill" onclick="showMacroBreakdown('fibre')" style="cursor:pointer">
               <div class="macro-pill-label">Fibre</div>
               <div class="macro-pill-val" id="dash-nc">0g</div>
-              <div class="macro-pill-sub" id="dash-cal-target">/ — kcal</div>
+              <div class="macro-pill-sub" id="dash-cal-target">fibre</div>
             </div>
           </div>
         </div>
@@ -1312,6 +1312,18 @@
   </div>
 
   <!-- Toast -->
+  <!-- Macro breakdown modal -->
+  <div class="modal-overlay" id="modal-macro" onclick="closeModal('modal-macro',event)">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="modal-title" id="macro-modal-title" style="margin:0">Protein breakdown</div>
+        <button onclick="closeModal('modal-macro')" style="background:var(--surface2);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text2)">×</button>
+      </div>
+      <div id="macro-modal-list" style="max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
@@ -1385,7 +1397,57 @@ function setSuppLog(date, s) { setStore('jw_supp_log_' + date, s); }
 // ══════════════════════════════════════════════
 let currentMealFilter = 'all';
 
-function showScreen(name) {
+function showMacroBreakdown(macro) {
+  const log  = getFoodLog(todayKey());
+  if (!log.length) { showToast('No food logged today yet'); return; }
+
+  const labels = { p:'Protein', c:'Carbs', f:'Fat', fibre:'Fibre' };
+  const colors = { p:'var(--accent)', c:'var(--blue)', f:'var(--amber)', fibre:'var(--text2)' };
+  const label  = labels[macro];
+  const color  = colors[macro];
+
+  // Sort by macro value descending
+  const sorted = [...log].sort((a,b) => (b[macro]||0) - (a[macro]||0));
+  const total  = sorted.reduce((acc,f) => acc + (f[macro]||0), 0);
+
+  document.getElementById('macro-modal-title').textContent = label + ' breakdown';
+
+  const rows = sorted.map(f => {
+    const val = Math.round(f[macro]||0);
+    const pct = total > 0 ? Math.round(val/total*100) : 0;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0;padding-right:12px">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${f.meal||''} · ${Math.round(f.cal||0)} kcal</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:16px;font-weight:800;color:${color}">${val}g</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${pct}%</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('macro-modal-list').innerHTML = `
+    ${rows}
+    <div style="display:flex;justify-content:space-between;padding:12px 0;font-family:var(--font-mono)">
+      <div style="font-size:12px;font-weight:700">TOTAL</div>
+      <div style="font-size:16px;font-weight:800;color:${color}">${Math.round(total)}g</div>
+    </div>`;
+
+  openModal('modal-macro');
+}
+
+// ── Daily chat reset ──
+function resetChatIfNewDay() {
+  const lastChatDate = getStore('jw_chat_date', '');
+  const today = todayKey();
+  if (lastChatDate !== today) {
+    setStore('jw_nutr_chat', []);
+    setStore('jw_last_briefing', '');
+    setStore('jw_chat_date', today);
+  }
+}
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
@@ -3854,6 +3916,7 @@ updateAll();
 renderTrainingScreen();
 updateIntegrationStatus();
 renderOverview();
+resetChatIfNewDay();
 // Handle WHOOP OAuth callback if returning from auth
 handleWhoopCallback();
 // Auto-sync in background if keys are present and data is stale (>1 hour old)
