@@ -1326,14 +1326,17 @@
 // Claude API proxy — routes through /api/claude to avoid CORS
 async function claudeAPI(payload) {
   const apiKey = getStore('jw_api_key', '');
-  if (!apiKey) throw new Error('No API key');
+  if (!apiKey) throw new Error('No API key — add it in Settings');
   const res = await fetch('/api/claude', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ ...payload, apiKey }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
+  if (!res.ok) {
+    const errMsg = data?.error?.message || data?.error || JSON.stringify(data);
+    throw new Error('API ' + res.status + ': ' + errMsg);
+  }
   return data;
 }
 const todayKey = () => new Date().toISOString().slice(0,10);
@@ -3142,8 +3145,11 @@ async function sendNutritionistMessage(message, isAuto) {
 
   } catch(e) {
     thinking.remove();
-    console.error('Coach error:', e);
-    showToast('Coach error: ' + (e.message||'unknown').slice(0,40));
+    const msg = typeof e === 'string' ? e
+              : e?.message ? e.message
+              : JSON.stringify(e);
+    console.error('Coach error:', msg, e);
+    showToast('Coach error: ' + msg.slice(0,50));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '→'; }
   }
