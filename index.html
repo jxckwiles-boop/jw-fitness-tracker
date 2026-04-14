@@ -1298,10 +1298,12 @@
 
       <!-- Input row -->
       <div style="flex-shrink:0;border-top:1px solid var(--border);padding:10px 0 calc(12px + var(--safe-bottom))">
+        <!-- Multi-photo thumbnails strip -->
+        <div id="nutr-photos-strip" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
         <div style="display:flex;gap:8px;align-items:flex-end">
           <!-- Photo button -->
-          <button onclick="document.getElementById('nutr-photo-input').click()" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">📷</button>
-          <input type="file" id="nutr-photo-input" accept="image/*" style="display:none" onchange="handleNutrPhoto(this)">
+          <button onclick="document.getElementById('nutr-photo-input').click()" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:16px;flex-shrink:0;line-height:1" title="Add photo(s)">📷</button>
+          <input type="file" id="nutr-photo-input" accept="image/*" multiple style="display:none" onchange="handleNutrPhoto(this)">
           <!-- Text input -->
           <textarea id="nutr-input" placeholder="'just had porridge, 100g oats, 200g milk, 30g berries…' or ask anything" onkeydown="nutrInputKeydown(event)"
             style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:var(--font-display);font-size:14px;outline:none;resize:none;height:44px;max-height:120px;line-height:1.4;overflow-y:auto"></textarea>
@@ -3125,64 +3127,88 @@ function renderNutritionistChat(messages) {
 }
 
 // ── Nutritionist photo handling ──
-let nutrPhotoBase64 = null;
+let nutrPhotos = []; // array of {base64, mediaType, dataUrl}
+let nutrPhotoBase64 = null; // legacy compat
 let nutrPhotoMediaType = 'image/jpeg';
 
-function handleNutrPhoto(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    // Compress image via canvas before storing
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      // Cap at 1024px on longest side
-      const maxDim = 1024;
-      let w = img.width, h = img.height;
-      if (w > maxDim || h > maxDim) {
-        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-        else       { w = Math.round(w * maxDim / h); h = maxDim; }
-      }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.85);
-      nutrPhotoBase64 = compressed.split(',')[1];
-      nutrPhotoMediaType = 'image/jpeg'; // canvas always outputs jpeg
-      console.log('Photo compressed:', w + 'x' + h, nutrPhotoBase64.length, 'chars');
-      document.getElementById('nutr-photo-preview').src = compressed;
-      document.getElementById('nutr-photo-preview-wrap').style.display = 'flex';
-      document.getElementById('nutr-photo-preview-wrap').style.alignItems = 'center';
+function compressImageFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1024;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else       { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg', dataUrl });
+      };
+      img.src = e.target.result;
     };
-    img.src = dataUrl;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleNutrPhoto(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  Promise.all(files.map(compressImageFile)).then(results => {
+    nutrPhotos = [...nutrPhotos, ...results];
+    nutrPhotoBase64 = nutrPhotos[0]?.base64 || null;
+    renderPhotoStrip();
+    input.value = '';
+  });
+}
+
+function renderPhotoStrip() {
+  const strip = document.getElementById('nutr-photos-strip');
+  if (!strip) return;
+  if (!nutrPhotos.length) { strip.style.display = 'none'; strip.innerHTML = ''; return; }
+  strip.style.display = 'flex';
+  strip.innerHTML = nutrPhotos.map((p, i) => `
+    <div style="position:relative;flex-shrink:0">
+      <img src="${p.dataUrl}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)">
+      <div onclick="removeNutrPhoto(${i})" style="position:absolute;top:-5px;right:-5px;background:var(--red);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#fff;line-height:1">×</div>
+    </div>`).join('');
+}
+
+function removeNutrPhoto(index) {
+  nutrPhotos.splice(index, 1);
+  nutrPhotoBase64 = nutrPhotos[0]?.base64 || null;
+  renderPhotoStrip();
 }
 
 function clearNutrPhoto() {
+  nutrPhotos = [];
   nutrPhotoBase64 = null;
   nutrPhotoMediaType = 'image/jpeg';
-  document.getElementById('nutr-photo-input').value = '';
-  document.getElementById('nutr-photo-preview-wrap').style.display = 'none';
+  const input = document.getElementById('nutr-photo-input');
+  if (input) input.value = '';
+  renderPhotoStrip();
 }
 
 async function sendNutritionistMessage(message, isAuto) {
   const input = document.getElementById('nutr-input');
   const msg   = message || (input?.value?.trim());
-  if (!msg && !nutrPhotoBase64) return;
+  if (!msg && nutrPhotos.length === 0) return;
   if (input && !isAuto) input.value = '';
 
   const chat = getStore('jw_nutr_chat', []);
   const time = new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
-  const hasPhoto = !!nutrPhotoBase64;
-  const photoSnapshot = nutrPhotoBase64;
+  const hasPhoto = nutrPhotos.length > 0;
+  const photoSnapshot = [...nutrPhotos]; // capture before clearing
   const photoMediaType = nutrPhotoMediaType || 'image/jpeg';
 
   if (!isAuto) {
     const userMsg = { role:'user', time,
-      content: msg || (hasPhoto ? '[Photo attached]' : ''),
-      hasPhoto };
+      content: msg || (hasPhoto ? `[${photoSnapshot.length} photo${photoSnapshot.length>1?'s':''} attached]` : ''),
+      hasPhoto, photoCount: photoSnapshot.length };
     chat.push(userMsg);
     setStore('jw_nutr_chat', chat);
     renderNutritionistChat(chat);
@@ -3215,11 +3241,14 @@ async function sendNutritionistMessage(message, isAuto) {
 
     // Build message content
     const userContent = [];
-    if (photoSnapshot) {
-      userContent.push({ type:'image', source:{ type:'base64', media_type: photoMediaType, data: photoSnapshot } });
+    // Add all photos first, then text
+    if (photoSnapshot.length > 0) {
+      photoSnapshot.forEach(p => {
+        userContent.push({ type:'image', source:{ type:'base64', media_type: p.mediaType, data: p.base64 } });
+      });
     }
     userContent.push({ type:'text', text:
-      `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo)'}` });
+      `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo' + (photoSnapshot.length>1?'s':'') + ')'}` });
 
     console.log('Calling claudeAPI, context size:', JSON.stringify(context).length, 'chars, photo:', photoSnapshot ? photoMediaType + ' ' + photoSnapshot.length + 'chars' : 'none');
     const data = await claudeAPI({
