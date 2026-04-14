@@ -3105,7 +3105,13 @@ async function sendNutritionistMessage(message, isAuto) {
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
 
   try {
-    const context = buildNutritionContext();
+    let context;
+    try {
+      context = buildNutritionContext();
+    } catch(ctxErr) {
+      console.error('Context build error:', ctxErr);
+      throw new Error('Context error: ' + (ctxErr.message || String(ctxErr)));
+    }
 
     // Build message content
     const userContent = [];
@@ -3115,6 +3121,7 @@ async function sendNutritionistMessage(message, isAuto) {
     userContent.push({ type:'text', text:
       `CURRENT DATA:\n${JSON.stringify(context, null, 2)}\n\nJW says: ${msg || '(see attached photo)'}` });
 
+    console.log('Calling claudeAPI, context size:', JSON.stringify(context).length, 'chars');
     const data = await claudeAPI({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
