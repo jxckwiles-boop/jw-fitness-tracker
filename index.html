@@ -1830,10 +1830,24 @@ function handleEstimatePhoto(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    estimatePhotoBase64 = e.target.result.split(',')[1];
-    document.getElementById('est-photo-preview').src = e.target.result;
-    document.getElementById('est-photo-preview-wrap').style.display = '';
-    document.getElementById('est-photo-zone').style.display = 'none';
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 1024;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else       { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      estimatePhotoBase64 = compressed.split(',')[1];
+      document.getElementById('est-photo-preview').src = compressed;
+      document.getElementById('est-photo-preview-wrap').style.display = '';
+      document.getElementById('est-photo-zone').style.display = 'none';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -3056,19 +3070,28 @@ function handleNutrPhoto(input) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
-    // Extract media type and base64 data from data URL
-    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (!matches) { showToast('Could not read image'); return; }
-    nutrPhotoMediaType = matches[1]; // e.g. image/jpeg, image/png, image/heic
-    nutrPhotoBase64 = matches[2];
-    // Normalise HEIC to jpeg for API compatibility
-    if (nutrPhotoMediaType === 'image/heic' || nutrPhotoMediaType === 'image/heif') {
-      nutrPhotoMediaType = 'image/jpeg';
-    }
-    console.log('Photo selected:', nutrPhotoMediaType, nutrPhotoBase64.length, 'chars');
-    document.getElementById('nutr-photo-preview').src = dataUrl;
-    document.getElementById('nutr-photo-preview-wrap').style.display = 'flex';
-    document.getElementById('nutr-photo-preview-wrap').style.alignItems = 'center';
+    // Compress image via canvas before storing
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // Cap at 1024px on longest side
+      const maxDim = 1024;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else       { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      nutrPhotoBase64 = compressed.split(',')[1];
+      nutrPhotoMediaType = 'image/jpeg'; // canvas always outputs jpeg
+      console.log('Photo compressed:', w + 'x' + h, nutrPhotoBase64.length, 'chars');
+      document.getElementById('nutr-photo-preview').src = compressed;
+      document.getElementById('nutr-photo-preview-wrap').style.display = 'flex';
+      document.getElementById('nutr-photo-preview-wrap').style.alignItems = 'center';
+    };
+    img.src = dataUrl;
   };
   reader.readAsDataURL(file);
 }
