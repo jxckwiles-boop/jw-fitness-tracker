@@ -3445,7 +3445,7 @@ async function syncHevy() {
     let allWorkouts=[], page=1;
     while (page<=20) {
       if (statusEl) statusEl.textContent=`Fetching workouts (page ${page})…`;
-      const res = await fetch(`/api/whoop-auth?hevy=/workouts%3Fpage%3D${page}%26pageSize%3D10`,{
+      const res = await fetch(`/api/whoop-auth?hevy=/workouts&page=${page}&pageSize=10`,{
         headers:{'api-key':key,'accept':'application/json'}
       });
       if (!res.ok) {
