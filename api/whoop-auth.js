@@ -13,8 +13,12 @@ export default async function handler(req, res) {
     const path    = req.query.hevy;
     const apiKey  = req.headers['api-key'];
     if (!apiKey) return res.status(401).json({ error: 'Missing api-key' });
+    // Forward all query params except 'hevy' itself
+    const { hevy: _, ...rest } = req.query;
+    const qs = new URLSearchParams(rest).toString();
+    const url = `https://api.hevyapp.com/v1${path}${qs ? '?' + qs : ''}`;
     try {
-      const response = await fetch(`https://api.hevyapp.com/v1${path}`, {
+      const response = await fetch(url, {
         headers: { 'api-key': apiKey, 'accept': 'application/json' }
       });
       const data = await response.json();
