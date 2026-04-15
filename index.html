@@ -2686,13 +2686,12 @@ function renderWeekStats() {
   const hevySessions  = getStore('jw_hevy_sessions', []).filter(s=>new Date(s.date+'T12:00:00')>=weekAgo);
   const whoopWorkouts = (getStore('jw_whoop_data',{}).recentWorkouts||[])
     .filter(w => new Date(w.date+'T12:00:00') >= weekAgo && w.isCardio !== false);
-  const localSessions = getSessionLog().filter(s=>new Date(s.date+'T12:00:00')>=weekAgo);
 
-  const liftSessions  = hevySessions.length || localSessions.filter(s=>s.type==='weights').length;
-  const cardioCount   = whoopWorkouts.length || localSessions.filter(s=>s.type==='cardio').length;
-  const totalSessions = liftSessions + cardioCount;
-  const vol = hevySessions.reduce((a,s)=>a+(s.totalVolume||0),0) ||
-              localSessions.reduce((a,s)=>a+(s.totalVolume||0),0);
+  // Count unique lift days from Hevy (deduplicated by date)
+  const liftDates = new Set(hevySessions.map(s=>s.date));
+  const cardioCount = whoopWorkouts.length;
+  const totalSessions = liftDates.size + cardioCount;
+  const vol = hevySessions.reduce((a,s)=>a+(s.totalVolume||0),0);
 
   const s=document.getElementById('week-sessions'), v=document.getElementById('week-volume'), r=document.getElementById('week-rpe');
   if(s) s.textContent=totalSessions;
@@ -3442,9 +3441,9 @@ async function syncHevy() {
   if (statusEl) { statusEl.style.display=''; statusEl.style.color='var(--text3)'; statusEl.textContent='Connecting to Hevy…'; }
 
   try {
-    let allWorkouts=[], page=1;
-    while (page<=20) {
-      if (statusEl) statusEl.textContent=`Fetching workouts (page ${page})…`;
+    let allWorkouts=[], page=1, pageCount=1;
+    while (page <= pageCount && page <= 30) {
+      if (statusEl) statusEl.textContent=`Fetching workouts (page ${page}${pageCount>1?' of '+pageCount:''})…`;
       const res = await fetch(`/api/whoop-auth?hevy=/workouts&page=${page}&pageSize=10`,{
         headers:{'api-key':key,'accept':'application/json'}
       });
@@ -3453,11 +3452,24 @@ async function syncHevy() {
         throw new Error('Hevy error '+res.status);
       }
       const data = await res.json();
+      console.log('Hevy page', page, 'response keys:', Object.keys(data), 'page_count:', data.page_count, 'workouts:', data.workouts?.length);
+      // Log first workout's exercise structure so we can see muscle group fields
+      if (page === 1 && data.workouts?.[0]?.exercises?.[0]) {
+        console.log('Sample exercise:', JSON.stringify(data.workouts[0].exercises[0]));
+      }
       const ws = data.workouts||[];
       allWorkouts = allWorkouts.concat(ws);
-      if (ws.length < 10) break;
+      pageCount = data.page_count || 1;
+      if (ws.length === 0) break;
       page++;
     }
+
+    // Deduplicate by workout ID in case of any overlap
+    const seen = new Set();
+    allWorkouts = allWorkouts.filter(w => {
+      if (seen.has(w.id)) return false;
+      seen.add(w.id); return true;
+    });
 
     if (statusEl) statusEl.textContent=`Processing ${allWorkouts.length} workouts…`;
     const weightLog = getWeightLog();
@@ -3520,10 +3532,19 @@ function processHevyWorkout(w, bodyweight) {
       return v>bv?s:b;
     }, sets[0]||{reps:0,weight:0});
     const volume = sets.reduce((acc,s)=>acc+(s.reps*(isBW?bodyweight:s.weight)),0);
+
+    // Hevy API returns muscle groups in multiple possible fields
+    const muscleGroup = ex.muscle_group
+      || ex.primary_muscle_group
+      || ex.muscles?.[0]
+      || ex.exercise_template?.muscle_group
+      || ex.exercise_template?.primary_muscle_group
+      || guessMuscleGroup(ex.title||'');
+
     return { name:ex.title||'Unknown', sets:sets.length,
              bestReps:best.reps||0, bestWeight:isBW?bodyweight:(best.weight||0),
              isBodyweight:isBW, volume:Math.round(volume),
-             muscleGroup:ex.muscle_group||'' };
+             muscleGroup };
   });
 
   const totalVolume = exercises.reduce((a,e)=>a+e.volume,0);
@@ -3535,6 +3556,22 @@ function processHevyWorkout(w, bodyweight) {
     sessionType:guessSessionType(exercises.map(e=>e.name)),
     title:w.title||'', duration, totalVolume:Math.round(totalVolume),
     exercises, notes:w.description||'', rpe:null };
+}
+
+// Fallback muscle group detection from exercise name
+function guessMuscleGroup(name) {
+  const n = name.toLowerCase();
+  if (/bench|chest|pec|fly|push.?up|dip/.test(n)) return 'Chest';
+  if (/squat|leg press|lunge|quad|step.?up/.test(n)) return 'Quads';
+  if (/deadlift|rdl|romanian|hamstring|leg curl/.test(n)) return 'Hamstrings';
+  if (/hip thrust|glute|bridge/.test(n)) return 'Glutes';
+  if (/pull.?up|chin|lat|pulldown|row|rhomboid/.test(n)) return 'Back';
+  if (/shoulder|press|delt|ohp|lateral|raise/.test(n)) return 'Shoulders';
+  if (/tricep|skull|pushdown|extension/.test(n)) return 'Triceps';
+  if (/bicep|curl|hammer/.test(n)) return 'Biceps';
+  if (/calf|gastro|soleus/.test(n)) return 'Calves';
+  if (/ab|core|plank|crunch|sit.?up/.test(n)) return 'Abs';
+  return '';
 }
 
 function guessSessionType(names) {
