@@ -17,11 +17,13 @@ export default async function handler(req, res) {
     const { hevy: _, ...rest } = req.query;
     const qs = new URLSearchParams(rest).toString();
     const url = `https://api.hevyapp.com/v1${path}${qs ? '?' + qs : ''}`;
+    console.log('Hevy proxy URL:', url);
     try {
       const response = await fetch(url, {
         headers: { 'api-key': apiKey, 'accept': 'application/json' }
       });
       const data = await response.json();
+      console.log('Hevy response status:', response.status, 'keys:', Object.keys(data));
       return res.status(response.status).json(data);
     } catch(err) {
       return res.status(500).json({ error: err.message });
