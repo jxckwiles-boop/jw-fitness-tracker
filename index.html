@@ -3441,26 +3441,29 @@ async function syncHevy() {
   if (statusEl) { statusEl.style.display=''; statusEl.style.color='var(--text3)'; statusEl.textContent='Connecting to Hevy…'; }
 
   try {
-    let allWorkouts=[], page=1, pageCount=1;
-    while (page <= pageCount && page <= 30) {
-      if (statusEl) statusEl.textContent=`Fetching workouts (page ${page}${pageCount>1?' of '+pageCount:''})…`;
+    let allWorkouts=[], page=1;
+    while (page <= 30) {
+      if (statusEl) statusEl.textContent=`Fetching workouts (page ${page})…`;
       const res = await fetch(`/api/whoop-auth?hevy=/workouts&page=${page}&pageSize=10`,{
         headers:{'api-key':key,'accept':'application/json'}
       });
       if (!res.ok) {
         if (res.status===401) throw new Error('Invalid API key');
+        // 404 on pages after the first = no more pages, stop gracefully
+        if (res.status===404 && page > 1) break;
         throw new Error('Hevy error '+res.status);
       }
       const data = await res.json();
-      console.log('Hevy page', page, 'response keys:', Object.keys(data), 'page_count:', data.page_count, 'workouts:', data.workouts?.length);
-      // Log first workout's exercise structure so we can see muscle group fields
-      if (page === 1 && data.workouts?.[0]?.exercises?.[0]) {
-        console.log('Sample exercise:', JSON.stringify(data.workouts[0].exercises[0]));
+      if (page === 1) {
+        console.log('Hevy page 1 keys:', Object.keys(data));
+        if (data.workouts?.[0]?.exercises?.[0]) {
+          console.log('Sample exercise:', JSON.stringify(data.workouts[0].exercises[0]));
+        }
       }
       const ws = data.workouts||[];
+      if (ws.length === 0) break; // no more workouts
       allWorkouts = allWorkouts.concat(ws);
-      pageCount = data.page_count || 1;
-      if (ws.length === 0) break;
+      if (ws.length < 10) break; // last page
       page++;
     }
 
