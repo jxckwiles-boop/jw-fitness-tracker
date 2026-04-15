@@ -3462,11 +3462,31 @@ async function syncHevy() {
     if (statusEl) statusEl.textContent=`Processing ${allWorkouts.length} workouts…`;
     const weightLog = getWeightLog();
     const latestBW = weightLog.length ? weightLog[weightLog.length-1].weight : 82;
-    const processed = allWorkouts.map(w => processHevyWorkout(w, latestBW));
 
-    setStore('jw_hevy_sessions', processed);
+    const processed = [];
+    for (let i = 0; i < allWorkouts.length; i++) {
+      try {
+        processed.push(processHevyWorkout(allWorkouts[i], latestBW));
+      } catch(procErr) {
+        console.warn(`Skipping workout ${i} (${allWorkouts[i]?.title||'unknown'}):`, procErr.message);
+      }
+    }
+
+    if (statusEl) statusEl.textContent=`Saving ${processed.length} workouts…`;
+
+    // Store sessions — trim exercise detail if too large for localStorage
+    let toStore = processed;
+    const jsonSize = JSON.stringify(processed).length;
+    console.log('Hevy processed size:', jsonSize, 'chars');
+    if (jsonSize > 3000000) {
+      // Trim to last 60 sessions if storage would exceed ~3MB
+      toStore = processed.slice(0, 60);
+      console.warn('Trimmed to 60 sessions to fit localStorage');
+    }
+
+    setStore('jw_hevy_sessions', toStore);
     setStore('jw_hevy_last_sync', new Date().toISOString());
-    setPRs(extractPRsFromHistory(processed));
+    setPRs(extractPRsFromHistory(processed)); // use full set for PRs
 
     // Inject today's Hevy session into local log if not already there
     const today = todayKey();
@@ -3533,10 +3553,12 @@ function extractPRsFromHistory(sessions) {
   const prs={};
   [...sessions].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{
     (s.exercises||[]).forEach(ex=>{
-      const key=ex.name.toLowerCase();
-      if (!prs[key]||ex.bestWeight>prs[key].weight) {
-        prs[key]={name:ex.name,weight:ex.bestWeight,reps:ex.bestReps,sets:ex.sets,date:s.date};
-      }
+      try {
+        const key=ex.name.toLowerCase();
+        if (!prs[key]||ex.bestWeight>prs[key].weight) {
+          prs[key]={name:ex.name,weight:ex.bestWeight,reps:ex.bestReps,sets:ex.sets,date:s.date};
+        }
+      } catch(e) {}
     });
   });
   return prs;
