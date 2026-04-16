@@ -770,15 +770,6 @@
         <button onclick="openHevy()" style="padding:9px 16px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;font-family:var(--font-display)">Open Hevy</button>
       </div>
 
-      <!-- Quick session log (lightweight - for when you want to record it here too) -->
-      <div class="section-header">
-        <span class="section-title">Quick session log</span>
-        <span class="section-action" onclick="openQuickLogModal()">+ Log here</span>
-      </div>
-      <div id="todays-sessions-list">
-        <div style="font-size:13px;color:var(--text3);font-family:var(--font-mono);padding:4px 0 12px">Sessions you log here sync to your nutrition targets.</div>
-      </div>
-
       <!-- Week muscle heatmap -->
       <div class="section-header" style="margin-top:4px">
         <span class="section-title">This week — muscle groups</span>
@@ -789,21 +780,29 @@
 
       <!-- Weekly volume -->
       <div class="section-header">
-        <span class="section-title">Weekly volume</span>
+        <span class="section-title">This week</span>
       </div>
       <div class="card" style="margin-bottom:12px">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
           <div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">SESSIONS</div>
-            <div style="font-size:24px;font-weight:800;color:var(--accent);margin-top:4px" id="week-sessions">0</div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">TOTAL SESSIONS</div>
+            <div style="font-size:32px;font-weight:800;color:var(--accent);line-height:1;margin-top:4px" id="week-sessions">0</div>
           </div>
-          <div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">LIFT VOL</div>
-            <div style="font-size:24px;font-weight:800;margin-top:4px" id="week-volume">0kg</div>
+          <div style="flex:1;border-left:1px solid var(--border);padding-left:16px;display:grid;gap:6px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:12px;color:var(--text2);font-family:var(--font-mono)">↳ Lifting (Hevy)</div>
+              <div style="font-size:14px;font-weight:700;color:var(--accent)" id="week-lift-count">0</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:12px;color:var(--text2);font-family:var(--font-mono)">↳ Cardio (WHOOP)</div>
+              <div style="font-size:14px;font-weight:700;color:var(--blue)" id="week-rpe">0</div>
+            </div>
           </div>
-          <div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">CARDIO</div>
-            <div style="font-size:24px;font-weight:800;color:var(--blue);margin-top:4px" id="week-rpe">0</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">LIFT VOLUME</div>
+            <div style="font-size:18px;font-weight:800" id="week-volume">—</div>
           </div>
         </div>
       </div>
@@ -823,49 +822,6 @@
       <div id="pr-list">
         <div class="empty-state"><div class="empty-icon">🏆</div>No PRs yet — sync Hevy to populate</div>
       </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════ -->
-  <!--  MODAL: QUICK SESSION LOG             -->
-  <!-- ══════════════════════════════════════ -->
-  <div class="modal-overlay" id="modal-quicklog" onclick="closeModal('modal-quicklog',event)">
-    <div class="modal">
-      <div class="modal-handle"></div>
-      <div class="modal-title">Log today's session</div>
-      <div style="font-size:13px;color:var(--text2);font-family:var(--font-mono);margin-bottom:16px;line-height:1.6">This feeds your nutrition targets. Use Hevy for the full workout detail.</div>
-
-      <div class="input-group">
-        <label class="input-label">Session type</label>
-        <select id="ql-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;color:var(--text);font-family:var(--font-display);font-size:15px;outline:none;-webkit-appearance:none" onchange="updateQLMuscles()">
-          <option value="lower_push">Monday — Lower &amp; Push</option>
-          <option value="pull_hinge">Wednesday — Pull &amp; Hinge</option>
-          <option value="hypertrophy">Saturday — Hypertrophy Support</option>
-          <option value="cardio">Cardio / Spin</option>
-          <option value="rest">Rest day</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="input-group">
-          <label class="input-label">Duration (mins)</label>
-          <input type="number" id="ql-duration" placeholder="60">
-        </div>
-        <div class="input-group">
-          <label class="input-label">RPE (1–10)</label>
-          <input type="number" id="ql-rpe" placeholder="7" min="1" max="10">
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label class="input-label">Notes</label>
-        <input type="text" id="ql-notes" placeholder="How did it feel?">
-      </div>
-
-      <div id="ql-muscle-preview" style="margin-bottom:14px"></div>
-
-      <button class="btn btn-primary" onclick="saveQuickLog()">Save &amp; update nutrition targets</button>
     </div>
   </div>
 
@@ -1907,7 +1863,7 @@ function handleEstimatePhoto(input) {
       }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      const compressed = canvas.toDataURL('image/jpeg', 0.92);
       estimatePhotoBase64 = compressed.split(',')[1];
       document.getElementById('est-photo-preview').src = compressed;
       document.getElementById('est-photo-preview-wrap').style.display = '';
@@ -2687,16 +2643,17 @@ function renderWeekStats() {
   const whoopWorkouts = (getStore('jw_whoop_data',{}).recentWorkouts||[])
     .filter(w => new Date(w.date+'T12:00:00') >= weekAgo && w.isCardio !== false);
 
-  // Count unique lift days from Hevy (deduplicated by date)
-  const liftDates = new Set(hevySessions.map(s=>s.date));
+  const liftDates   = new Set(hevySessions.map(s=>s.date));
+  const liftCount   = liftDates.size;
   const cardioCount = whoopWorkouts.length;
-  const totalSessions = liftDates.size + cardioCount;
+  const totalSessions = liftCount + cardioCount;
   const vol = hevySessions.reduce((a,s)=>a+(s.totalVolume||0),0);
 
-  const s=document.getElementById('week-sessions'), v=document.getElementById('week-volume'), r=document.getElementById('week-rpe');
-  if(s) s.textContent=totalSessions;
-  if(v) v.textContent=vol>0?(vol/1000).toFixed(1)+'t':'—';
-  if(r) r.textContent=cardioCount;
+  const el = (id) => document.getElementById(id);
+  if(el('week-sessions'))   el('week-sessions').textContent   = totalSessions;
+  if(el('week-lift-count')) el('week-lift-count').textContent = liftCount;
+  if(el('week-rpe'))        el('week-rpe').textContent        = cardioCount;
+  if(el('week-volume'))     el('week-volume').textContent     = vol>0?(vol/1000).toFixed(1)+'t':'—';
 }
 
 function renderTodaysSessions() {
@@ -2925,10 +2882,17 @@ When JW describes food he's eaten (or attaches a photo of food/a label), you MUS
    <<<LOG:{"meal":"breakfast","name":"Porridge with berries & peanut butter","cal":520,"p":22,"c":68,"f":18,"fibre":7}>>>
 4. Then give your conversational response — feedback on the meal quality, timing, how it fits today's targets, what's still needed.
 
+LABEL PHOTOS — READ THESE PRECISELY:
+When a nutrition label photo is attached, this is the most important thing to get right. Do not estimate — read the actual numbers from the label.
+- Always use the "Per serving" column if the user describes eating a full serving, or calculate from "Per 100g" if they specify a weight
+- If multiple labels are attached (e.g. a main meal + sauce packet), read each one separately and combine the totals
+- State clearly which column you used: "Using per-serving values from the label..."
+- Cross-check: calories should roughly equal (protein × 4) + (carbs × 4) + (fat × 9). Flag if the label seems inconsistent
+- For anything not on a label (e.g. a flat white alongside a labelled item), estimate that separately and add to the total
+- Always show the label values you read before giving the combined total, so JW can verify you read it correctly
+
 Rules for logging:
 - Always include one LOG block per distinct meal described. If someone lists multiple foods in one message, combine them into a single LOG entry for that meal.
-- If a photo is attached showing a nutrition label, read the label and calculate macros for the quantity described.
-- If a photo shows a plate of food, estimate macros from what's visible plus any description given.
 - Always clarify the meal type in your response: "Logged as breakfast ✓" or "I've added this as your lunch."
 - If quantities are vague (e.g. "a bowl of pasta"), use realistic estimates and state your assumptions.
 - If context like timing is given ("just before my workout", "post-gym"), use it to give timing-specific feedback.
@@ -3145,7 +3109,7 @@ function compressImageFile(file) {
         }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
         resolve({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg', dataUrl });
       };
       img.src = e.target.result;
